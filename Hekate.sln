@@ -7,6 +7,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate", "src\Hekate\Hekate
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Tests", "tests\Hekate.Tests\Hekate.Tests.fsproj", "{9B5C1EA3-8872-4F4B-B986-6BDD84D8E4D3}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Console", "tests\Hekate.Console\Hekate.Console.fsproj", "{C6AE044D-FD16-46E2-8DA6-DC13881F58B6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{9B5C1EA3-8872-4F4B-B986-6BDD84D8E4D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B5C1EA3-8872-4F4B-B986-6BDD84D8E4D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B5C1EA3-8872-4F4B-B986-6BDD84D8E4D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6AE044D-FD16-46E2-8DA6-DC13881F58B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6AE044D-FD16-46E2-8DA6-DC13881F58B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6AE044D-FD16-46E2-8DA6-DC13881F58B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6AE044D-FD16-46E2-8DA6-DC13881F58B6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
