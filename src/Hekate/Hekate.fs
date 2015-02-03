@@ -84,3 +84,17 @@ let undir g =
 
 let suc (Context (_, _, _, Adj s)) =
     List.map snd s
+
+// Experimental
+
+let rec mmatch n =
+    function | Graph ((Context (p, v, l, s)), g) when v = n -> Some (Context (p, v, l, s)), g
+             | Graph (_, g) -> mmatch n g
+             | Empty -> None, Empty
+
+let gsuc n g =
+    match mmatch n g with
+    | Some (Context (_ , _, _, Adj s)), _ -> List.map snd s
+    | _ -> []
+
+
