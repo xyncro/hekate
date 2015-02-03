@@ -12,89 +12,196 @@
    [Erwig:2001ho]: Inductive Graphs and Functional Graph Algorithms
                    http://dl.acm.org/citation.cfm?id=968434.968437 *)
 
-(* Types
+open Aether
+open Aether.Operators
 
-   Types based on the type representations of an inductively
-   defined graph as defined in [Erwig:2001ho], extended to parameterize
-   the type of identifier, allowing for a choice of identifying type
-   beyond a simple integer.
+(* Prelude *)
 
-   Single case unions are used to provide some additional safety
-   and for some structure which may be useful in further extension
-   via patterns, lenses, etc.
+let private flip f a b =
+    f b a
 
-   Generic type parameters should be interpreted as follows:
+let private swap (a, b) =
+    (b, a)
 
-   'i - the type of the Identifier (an integer in [Erwig:2001ho]
-   'e - the type of the value associated with an edge, stored as part
-        of an adjacency (Adj<_,_>) list.
-   'n - the type of the value associated with a node (a character
-        in [Erqig:2001ho] *)
+(* Aliases
 
-type Node<'i> =
-    | Node of 'i
+   For concision using commonly used modules, we alias List and Map to
+   L and M respectively. *)
 
-type Adj<'e,'i> =
-    | Adj of ('e * Node<'i>) list
+module L = List
+module M = Map 
 
-type Context<'n,'e,'i> =
-    | Context of Adj<'e,'i> * Node<'i> * 'n * Adj<'e,'i>
+(* Definitional Types and Lenses
 
-type Graph<'n,'e,'i> =
-    | Graph of Context<'n,'e,'i> * Graph<'n,'e,'i>
-    | Empty
+   Types defining data structures which form the logical programming model
+   defined by the inductive definition of graphs, along with a set of lenses
+   for access to nested data structures. *)
 
-(* Operators
+type Value =
+    int
 
-   The & function from the [Erwig:2001ho] is defined as a custom
-   operator (which is a function with infix form in F# anyway).
+type Adj<'b> =
+    ('b * Value) list
 
-   To avoid overloading the existing & and to obtain the correct right
-   associativity required for &, the & function is defined as the ^&
-   operator. *)
+type Context<'a,'b> =
+    Adj<'b> * Value * 'a * Adj<'b>
 
-let (^&) c g =
-    Graph (c, g)
+let private predLens : Lens<Context<_,'b>, Adj<'b>> =
+    (fun (p, _, _, _) -> p), (fun p (_, v, l, s) -> (p, v, l, s))
 
-(* Functions *)
+let private valLens : Lens<Context<_,'b>, Value> =
+    (fun (_, v, _, _) -> v), (fun v (p, _, l, s) -> (p, v, l, s))
 
-let isEmpty =
-    function | Empty -> true
-             | _ -> false
+let private succLens : Lens<Context<_,'b>, Adj<'b>> =
+    (fun (_, _, _, s) -> s), (fun s (p, v, l, _) -> (p, v, l, s))
 
-let rec ufold f u =
-    function | Empty -> u
-             | Graph (c, g) -> f c (ufold f u g)
+(* Representational Types and Lenses
 
-let gmap f =
-    ufold (fun c -> 
-        (fun g -> (f c) ^& g)) Empty
+   Types used for the underlying implementation of the graph, modelling the
+   logically defined inductive definition as an optimized map, with sub-maps
+   defining node adjacencies. *)
 
-let nodes g =
-    ufold (fun (Context (_, v, _, _)) -> 
-        (fun vs -> v :: vs)) [] g
+type MAdj<'b> =
+    Map<Value,'b>
 
-let grev g =
-    gmap (fun (Context (p, v, l, s)) -> 
-        Context (s, v, l, p)) g
+type MContext<'a,'b> =
+    MAdj<'b> * 'a * MAdj<'b>
 
-let undir g =
-    gmap (fun (Context (Adj p, v, l, Adj s)) ->
-        let ps = Adj (p @ s) in Context (ps, v, l, ps)) g
+type MGraph<'a,'b> =
+    Map<Value, MContext<'a,'b>>
 
-let suc (Context (_, _, _, Adj s)) =
-    List.map snd s
+type Graph<'a,'b> =
+    MGraph<'a,'b>
 
-// Experimental
+let private mpredLens : Lens<MContext<_,'b>, MAdj<'b>> =
+    (fun (p, _, _) -> p), (fun p (_, l, s) -> (p, l, s))
 
-let rec mmatch n =
-    function | Graph ((Context (p, v, l, s)), g) when v = n -> Some (Context (p, v, l, s)), g
-             | Graph (_, g) -> mmatch n g
-             | Empty -> None, Empty
+let private mvalLens : Lens<MContext<'a,_>, 'a> =
+    (fun (_, l, _) -> l), (fun l (p, _, s) -> (p, l, s))
 
-let gsuc n g =
-    match mmatch n g with
-    | Some (Context (_ , _, _, Adj s)), _ -> List.map snd s
-    | _ -> []
+let private msuccLens : Lens<MContext<_,'b>, MAdj<'b>> =
+    (fun (_, _, s) -> s), (fun s (p, l, _) -> (p, l, s))
 
+(* Mappings
 
+   Mapping functions between the two definitional and representational data
+   structure families, used when translating between algorithmic operations applied
+   to the definitional model, and modifications to the underlying data structure of
+   the optmized representational model. *)
+
+let private fromAdj<'b> : Adj<'b> -> MAdj<'b> =
+    L.map swap >> M.ofList
+
+let private toAdj<'b> : MAdj<'b> -> Adj<'b> =
+    M.toList >> L.map swap
+
+let private fromContext<'a,'b> : Context<'a,'b> -> MContext<'a,'b> =
+    fun (p, _, l, s) -> fromAdj p, l, fromAdj s
+
+let private toContext<'a,'b> v : MContext<'a,'b> -> Context<'a,'b> =
+    fun (p, l, s) -> toAdj p, v, l, toAdj s
+
+(* Isomorphisms
+
+   Isomorphisms between data structures from the definitional and
+   representational type families. *)
+
+let private mcontextIso v : Iso<MContext<'a,'b>, Context<'a,'b>> =
+    toContext v, fromContext
+
+(* Graph *)
+
+module Graph =
+
+    (* Construction
+
+       The functions "Empty" and "&", forming the two basic construction
+       functions for the inductive definition fo a graph, as defined in the
+       table of Basic Graph Operations in [Erwig:2001ho].
+
+       "Empty" is defined as "empty", and "&" is defined as the function
+       "add". We move away from the operator syntax with the expectation that
+       the add function is pipe-friendly.
+
+       The functions are not exposed externally, but are used as the basis of
+       higher level functions exposed in later sections. *)
+
+    let private addPLens l a v =
+        mapPLens a >?-> l >??> mapPLens v
+
+    let private mapGraphAdd c v p s =
+           setPL (mapPLens v <?-> mcontextIso v) c
+        >> flip (L.fold (fun g (l, a) -> setPL (addPLens msuccLens a v) l g)) p
+        >> flip (L.fold (fun g (l, a) -> setPL (addPLens mpredLens a v) l g)) s
+
+    let add c =
+        mapGraphAdd c (getL valLens c) (getL predLens c) (getL succLens c)
+
+    let empty : MGraph<'a,'b> =
+        M.empty
+
+    (* Decomposition
+
+       Functions for decomposing an existent graph through a process
+       of matching, as defined in the table of Basic Graph Operations
+       in [Erqig:2001ho].
+   
+       The Empty-match function is named "isEmpty", the "&-match" function
+       becomes "extractAny", and the "&v" function becomes "extractSpecific", to
+       better align with F# expectations. In this case "extract" is felt to be
+       a better choice of verb than "match", both due to the nature of the function
+       and the overloading of meaning of the "match" verb within F#. *)
+
+    let private extPLens l a =
+        mapPLens a >?-> l
+
+    let private mapContextExtract v =
+           modL mpredLens (M.remove v) 
+        >> modL msuccLens (M.remove v) 
+        >> toContext v
+
+    let private mapGraphExtract v p s =
+           Map.remove v
+        >> flip (L.fold (fun g (_, a) -> modPL (extPLens msuccLens a) (M.remove v) g)) p
+        >> flip (L.fold (fun g (_, a) -> modPL (extPLens mpredLens a) (M.remove v) g)) s
+
+    let private extractSpecific v (g: MGraph<'a,'b>) =
+        match M.tryFind v g with
+        | Some mc ->
+            let c = mapContextExtract v mc
+            let g = mapGraphExtract v (getL predLens c) (getL succLens c) g
+
+            Some c, g
+        | _ ->
+            None, g
+
+    let isEmpty (g: MGraph<_,_>) =
+        M.isEmpty g
+
+    (* Listing
+
+       Functions for listing elements of a graph. As we are using
+       an optimized representation, these functions can be implemented in a more
+       efficient way than the standard application of ufold, using the functions
+       for the underlying representation data structure. *)
+
+    let nodesLabelled<'a,'b> : MGraph<'a,'b> -> (Value * 'a) list =
+        M.toList >> L.map (fun (v, (_, l, _)) -> v, l)
+
+    let nodes<'a,'b> : MGraph<'a,'b> -> Value list =
+        nodesLabelled >> L.map fst
+
+    (* Mapping
+
+       Functions for mapping over contexts, or parts of contexts. Again, given
+       an optimized representation, we use functions for the underlying data
+       structure. *)
+
+    let map f : MGraph<'a,'b> -> MGraph<'a,'b> =
+        M.map (fun v mc -> (toContext v >> f >> fromContext) mc)
+
+    let mapNodes f : MGraph<'a,'b> -> MGraph<'a,'b> =
+        M.map (fun _ mc -> modL mvalLens f mc)
+
+    let mapEdges f : MGraph<'a,'b> -> MGraph<'a,'b> =
+        M.map (fun _ mc -> (modL mpredLens (M.map f) >> modL msuccLens (M.map f)) mc)

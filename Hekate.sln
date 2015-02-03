@@ -9,6 +9,29 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Tests", "tests\Hekat
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Console", "tests\Hekate.Console\Hekate.Console.fsproj", "{C6AE044D-FD16-46E2-8DA6-DC13881F58B6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sln", "sln", "{73D33E27-9CE7-48CF-8785-21596AC25F9D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D1DA0382-C594-48A3-84B8-8B943C40B713}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CC262F4D-2C10-4A79-8FB4-40F1F35780F9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{5001D89F-444B-4C5B-B85E-FF69DAD12DFE}"
+	ProjectSection(SolutionItems) = preProject
+		build.cmd = build.cmd
+		build.fsx = build.fsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "paket", "paket", "{66F030C1-CE2E-4C56-A13E-D3976B005848}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+		paket.lock = paket.lock
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "references", "references", "{C7073A13-4414-47A7-B2EC-03D3939DB255}"
+	ProjectSection(SolutionItems) = preProject
+		src\Hekate\Hekate.fsproj.paket.references = src\Hekate\Hekate.fsproj.paket.references
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +53,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8F90E93C-87B2-478A-8161-6BC9019FE0C6} = {D1DA0382-C594-48A3-84B8-8B943C40B713}
+		{9B5C1EA3-8872-4F4B-B986-6BDD84D8E4D3} = {CC262F4D-2C10-4A79-8FB4-40F1F35780F9}
+		{C6AE044D-FD16-46E2-8DA6-DC13881F58B6} = {CC262F4D-2C10-4A79-8FB4-40F1F35780F9}
+		{5001D89F-444B-4C5B-B85E-FF69DAD12DFE} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
+		{66F030C1-CE2E-4C56-A13E-D3976B005848} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
+		{C7073A13-4414-47A7-B2EC-03D3939DB255} = {66F030C1-CE2E-4C56-A13E-D3976B005848}
 	EndGlobalSection
 EndGlobal

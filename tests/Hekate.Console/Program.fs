@@ -1,17 +1,16 @@
 ﻿open Hekate
 
 [<EntryPoint>]
-let main _ = 
+let main _ =
     
-    let g =
-           Context (Adj [("down", Node 2)], Node 3, "c", Adj [("up", Node 1)])
-        ^& Context (Adj [("right", Node 1)], Node 2, "b", Adj [("left", Node 1)])
-        ^& Context (Adj [], Node 1, "a", Adj [])
-        ^& Empty
+    let g1 =
+        Graph.empty
+        |> Graph.add ([], 3, 'c', [])
+        |> Graph.add ([], 2, 'b', [("down", 3)])
+        |> Graph.add ([("left", 2); ("up", 3)], 1, 'a', [("right", 2)])
 
-    let empty = isEmpty g
-    let nodes = nodes g
-    let rev = grev g
-    let undir = undir g
+    let empty = Graph.isEmpty g1
+    let nodes = Graph.nodes g1
+    let nodesL = Graph.nodesLabelled g1
 
     0
