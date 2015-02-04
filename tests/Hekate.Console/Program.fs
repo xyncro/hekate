@@ -11,6 +11,6 @@ let main _ =
 
     let empty = Graph.isEmpty g1
     let nodes = Graph.nodes g1
-    let nodesL = Graph.nodesLabelled g1
+    let nodesLabelled = Graph.nodesLabelled g1
 
     0

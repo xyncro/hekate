@@ -82,6 +82,11 @@ let private mvalLens : Lens<MContext<'a,_>, 'a> =
 let private msuccLens : Lens<MContext<_,'b>, MAdj<'b>> =
     (fun (_, _, s) -> s), (fun s (p, l, _) -> (p, l, s))
 
+(* Function Types *)
+
+type GraphMap<'a,'b> =
+    Graph<'a,'b> -> Graph<'a,'b>
+
 (* Mappings
 
    Mapping functions between the two definitional and representational data
@@ -134,10 +139,10 @@ module Graph =
         >> flip (L.fold (fun g (l, a) -> setPL (addPLens msuccLens a v) l g)) p
         >> flip (L.fold (fun g (l, a) -> setPL (addPLens mpredLens a v) l g)) s
 
-    let add c =
+    let add c : GraphMap<'a,'b> =
         mapGraphAdd c (getL valLens c) (getL predLens c) (getL succLens c)
 
-    let empty : MGraph<'a,'b> =
+    let empty : Graph<'a,'b> =
         M.empty
 
     (* Decomposition
@@ -165,7 +170,7 @@ module Graph =
         >> flip (L.fold (fun g (_, a) -> modPL (extPLens msuccLens a) (M.remove v) g)) p
         >> flip (L.fold (fun g (_, a) -> modPL (extPLens mpredLens a) (M.remove v) g)) s
 
-    let private extractSpecific v (g: MGraph<'a,'b>) =
+    let private extractSpecific v (g: Graph<'a,'b>) =
         match M.tryFind v g with
         | Some mc ->
             let c = mapContextExtract v mc
@@ -175,7 +180,7 @@ module Graph =
         | _ ->
             None, g
 
-    let isEmpty (g: MGraph<_,_>) =
+    let isEmpty (g: Graph<_,_>) =
         M.isEmpty g
 
     (* Listing
@@ -185,10 +190,10 @@ module Graph =
        efficient way than the standard application of ufold, using the functions
        for the underlying representation data structure. *)
 
-    let nodesLabelled<'a,'b> : MGraph<'a,'b> -> (Value * 'a) list =
+    let nodesLabelled<'a,'b> : Graph<'a,'b> -> (Value * 'a) list =
         M.toList >> L.map (fun (v, (_, l, _)) -> v, l)
 
-    let nodes<'a,'b> : MGraph<'a,'b> -> Value list =
+    let nodes<'a,'b> : Graph<'a,'b> -> Value list =
         nodesLabelled >> L.map fst
 
     (* Mapping
@@ -197,11 +202,11 @@ module Graph =
        an optimized representation, we use functions for the underlying data
        structure. *)
 
-    let map f : MGraph<'a,'b> -> MGraph<'a,'b> =
+    let map f : GraphMap<'a,'b> =
         M.map (fun v mc -> (toContext v >> f >> fromContext) mc)
 
-    let mapNodes f : MGraph<'a,'b> -> MGraph<'a,'b> =
+    let mapNodes f : GraphMap<'a,'b> =
         M.map (fun _ mc -> modL mvalLens f mc)
 
-    let mapEdges f : MGraph<'a,'b> -> MGraph<'a,'b> =
+    let mapEdges f : GraphMap<'a,'b> =
         M.map (fun _ mc -> (modL mpredLens (M.map f) >> modL msuccLens (M.map f)) mc)
