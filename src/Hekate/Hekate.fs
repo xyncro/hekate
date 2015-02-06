@@ -25,7 +25,7 @@
      an unlabelled graph, either in terms of nodes or edges, and thus does
      not draw the FGL distinction between types Node, LNode, etc.
 
-   - Hekate implements the underlying representation using a Map type which
+   - Hekate implements the underlying representation using a M type which
      is parameterized by key and value types, we allow node IDs to be of any
      type supporting comparison. Our graph type is this parameterized by the
      types of the node IDs, node labels, and edge labels.
@@ -50,12 +50,11 @@ let private mapSnd f _ a =
     f a
 
 (* Aliases
-
-   For concision using commonly used modules, we alias List and Map to
+   For concision using commonly used modules, we alias L and M to
    L and M respectively. *)
 
 module L = List
-module M = Map 
+module M = Map
 
 (* Definitional Types and Lenses
 
@@ -63,19 +62,21 @@ module M = Map
    defined by the inductive definition of graphs, along with a set of lenses
    for access to nested data structures. *)
 
-type Node<'v,'a> =
+type Node<'v> =
+    'v
+
+type Edge<'v> =
+    'v * 'v
+
+type LNode<'v,'a> =
     'v * 'a
 
-type Edge<'v,'b> =
+type LEdge<'v,'b> =
     'v * 'v * 'b
 
 type Adj<'v,'b> =
     ('b * 'v) list
 
-/// <summary>
-/// A single Context which may be composed with a <see cref="Graph{v,a,b}" />
-/// to form a new <see cref="Graph{v,a,b}" />.
-/// </summary>
 type Context<'v,'a,'b> =
     Adj<'v,'b> * 'v * 'a * Adj<'v,'b>
 
@@ -139,10 +140,58 @@ let private toContext<'v,'a,'b when 'v: comparison> v : MContext<'v,'a,'b> -> Co
 let private mcontextIso v : Iso<MContext<'v,'a,'b>, Context<'v,'a,'b>> =
     toContext v, fromContext
 
+(* Composition *)
+
+let private addMAdjPLens l a v =
+    mapPLens a >?-> l >??> mapPLens v
+
+let private mapGraphAdd c v p s =
+       setPL (mapPLens v <?-> mcontextIso v) c
+    >> flip (L.fold (fun g (l, a) -> setPL (addMAdjPLens msuccLens a v) l g)) p
+    >> flip (L.fold (fun g (l, a) -> setPL (addMAdjPLens mpredLens a v) l g)) s
+
+let private add (c: Context<'v,'a,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+    mapGraphAdd c (getL valLens c) (getL predLens c) (getL succLens c)
+
+(* Extraction
+
+    Functions for decomposing an existent graph through a process
+    of matching, as defined in the table of Basic Graph Operations
+    in [Erqig:2001ho].
+   
+    The Empty-match function is named "isEmpty", the "&-match" function
+    becomes "extractAny", and the "&v" function becomes "extractSpecific", to
+    better align with F# expectations. In this case "extract" is felt to be
+    a better choice of verb than "match", both due to the nature of the function
+    and the overloading of meaning of the "match" verb within F#. *)
+
+let private extPLens l a =
+    mapPLens a >?-> l
+
+let private extractContext v =
+       modL mpredLens (M.remove v) 
+    >> modL msuccLens (M.remove v) 
+    >> toContext v
+
+let private extractGraph v p s =
+       M.remove v
+    >> flip (L.fold (fun g (_, a) -> modPL (extPLens msuccLens a) (M.remove v) g)) p
+    >> flip (L.fold (fun g (_, a) -> modPL (extPLens mpredLens a) (M.remove v) g)) s
+
+let private extractSpecific v (g: Graph<'v,'a,'b>) =
+    match M.tryFind v g with
+    | Some mc ->
+        let c = extractContext v mc
+        let g = extractGraph v (getL predLens c) (getL succLens c) g
+
+        Some c, g
+    | _ ->
+        None, g
+
 (* Graph
 
    The "public" API to Hekate is exposed as the Graph module, providing
-   a API stylistically similar to common F# modules like List, Map, etc.
+   a API stylistically similar to common F# modules like L, M, etc.
 
    F# naming conventions have been applied where relevant, in contrast to
    either FGL or [Erwig:2001ho]. *)
@@ -162,63 +211,43 @@ module Graph =
        The functions are not exposed externally, but are used as the basis of
        higher level functions exposed in later sections. *)
 
-    let private addPLens l a v =
-        mapPLens a >?-> l >??> mapPLens v
-
-    let private mapGraphAdd c v p s =
-           setPL (mapPLens v <?-> mcontextIso v) c
-        >> flip (L.fold (fun g (l, a) -> setPL (addPLens msuccLens a v) l g)) p
-        >> flip (L.fold (fun g (l, a) -> setPL (addPLens mpredLens a v) l g)) s
-
-    /// <summary>
-    /// Adds a <see cref="Context{v,a,b}" /> to a Graph.
-    /// </summary>
-    /// <param name="c">The new <see cref="Context{v,a,b}" /> to be added.</param>
-    let add c : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-        mapGraphAdd c (getL valLens c) (getL predLens c) (getL succLens c)
-
     let empty : Graph<'v,'a,'b> =
         M.empty
 
-    (* Decomposition
+    let addNode ((v, l): LNode<'v,'a>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+        setPL (mapPLens v) (M.empty, l, M.empty)
 
-       Functions for decomposing an existent graph through a process
-       of matching, as defined in the table of Basic Graph Operations
-       in [Erqig:2001ho].
-   
-       The Empty-match function is named "isEmpty", the "&-match" function
-       becomes "extractAny", and the "&v" function becomes "extractSpecific", to
-       better align with F# expectations. In this case "extract" is felt to be
-       a better choice of verb than "match", both due to the nature of the function
-       and the overloading of meaning of the "match" verb within F#. *)
+    let addEdge ((v1, v2, l): LEdge<'v,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+           setPL (addMAdjPLens msuccLens v1 v2) l
+        >> setPL (addMAdjPLens mpredLens v2 v1) l
 
-    let private extPLens l a =
-        mapPLens a >?-> l
+    let addNodes ns : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+        flip (L.fold (flip addNode)) ns
 
-    let private mapContextExtract v =
-           modL mpredLens (M.remove v) 
-        >> modL msuccLens (M.remove v) 
-        >> toContext v
+    let addEdges es : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+        flip (L.fold (flip addEdge)) es
 
-    let private mapGraphExtract v p s =
-           Map.remove v
-        >> flip (L.fold (fun g (_, a) -> modPL (extPLens msuccLens a) (M.remove v) g)) p
-        >> flip (L.fold (fun g (_, a) -> modPL (extPLens mpredLens a) (M.remove v) g)) s
+    let create ns es : Graph<'v,'a,'b> =
+        (addNodes ns >> addEdges es) empty
 
-    let private extractSpecific v (g: Graph<'v,'a,'b>) =
-        match M.tryFind v g with
-        | Some mc ->
-            let c = mapContextExtract v mc
-            let g = mapGraphExtract v (getL predLens c) (getL succLens c) g
 
-            Some c, g
-        | _ ->
-            None, g
 
     let isEmpty (g: Graph<_,_,_>) =
         M.isEmpty g
 
-    (* Maps
+    let containsNode v : Graph<'v,'a,'b> -> bool =
+        M.containsKey v
+
+    let countNodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
+           M.toList 
+        >> L.length
+
+    let countEdges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
+           M.toList 
+        >> L.map (fun (_, (_, _, s)) -> (M.toList >> L.length) s)
+        >> L.sum
+
+    (* Mapping
 
        Functions for mapping over contexts, or parts of contexts. Again, given
        an optimized representation, we use functions for the underlying data
@@ -241,26 +270,14 @@ module Graph =
        implemented in a more efficient way than the standard application of ufold,
        using the functions for the underlying representation data structure. *)
 
-    let nodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Node<'v,'a> list =
+    let nodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LNode<'v,'a> list =
            M.toList
         >> L.map (fun (v, (_, l, _)) -> v, l)
 
-    let edges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Edge<'v,'b> list =
+    let edges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LEdge<'v,'b> list =
            M.toList 
         >> L.map (fun (v, (_, _, s)) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s) 
         >> L.concat
-
-    let containsNode v : Graph<'v,'a,'b> -> bool =
-        M.containsKey v
-
-    let countNodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-           M.toList 
-        >> L.length
-
-    let countEdges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-           M.toList 
-        >> L.map (fun (_, (_, _, s)) -> (M.toList >> L.length) s)
-        >> L.sum
 
     let rev<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
         M.map (fun _ (p, l, s) -> (s, l, p))
@@ -270,8 +287,9 @@ module Graph =
        Functions for inspecting graphs, and common properties of nodes and
        edges within a graph. *)
 
-    let tryFindNode v : Graph<'v,'a,'b> -> Node<'v,'a> option =
-        M.tryFind v >> Option.map (fun (_, l, _) -> v, l)
+    let tryFindNode v : Graph<'v,'a,'b> -> LNode<'v,'a> option =
+           M.tryFind v
+        >> Option.map (fun (_, l, _) -> v, l)
 
     let findNode v =
            tryFindNode v 
