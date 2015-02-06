@@ -16,12 +16,22 @@
    is unsurprising given that it was originally written by Erwig et al,
    based on [Erwig:2001ho]. However, we simplify some aspects and change
    others due to our own needs and type system.
+
+   [FGL]: http://hackage.haskell.org/package/fgl
+
+   There are some significant differences between Hekate and FGL:
    
-   One principle difference is that Hekate does not have a concept of
-   an unlabelled graph, either in terms of nodes or edges, and thus does
-   not draw the FGL distinction between types Node, LNode, etc.
-   
-   [FGL]: http://hackage.haskell.org/package/fgl *)
+   - Hekate does not have a concept of
+     an unlabelled graph, either in terms of nodes or edges, and thus does
+     not draw the FGL distinction between types Node, LNode, etc.
+
+   - Hekate implements the underlying representation using a Map type which
+     is parameterized by key and value types, we allow node IDs to be of any
+     type supporting comparison. Our graph type is this parameterized by the
+     types of the node IDs, node labels, and edge labels.
+
+   - Hekate does not draw a distinction between static and dynamic graphs.
+     The Graph<_,_,_> type is always dynamic. *)
 
 open Aether
 open Aether.Operators
@@ -95,16 +105,8 @@ type Graph<'v,'a,'b> when 'v: comparison =
 let private mpredLens : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
     (fun (p, _, _) -> p), (fun p (_, l, s) -> (p, l, s))
 
-let private mvalLens : Lens<MContext<_,'a,_>, 'a> =
-    (fun (_, l, _) -> l), (fun l (p, _, s) -> (p, l, s))
-
 let private msuccLens : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
     (fun (_, _, s) -> s), (fun s (p, l, _) -> (p, l, s))
-
-(* Function Types *)
-
-type GraphMap<'v,'a,'b> when 'v: comparison =
-    Graph<'v,'a,'b> -> Graph<'v,'a,'b>
 
 (* Mappings
 
@@ -164,7 +166,7 @@ module Graph =
         >> flip (L.fold (fun g (l, a) -> setPL (addPLens msuccLens a v) l g)) p
         >> flip (L.fold (fun g (l, a) -> setPL (addPLens mpredLens a v) l g)) s
 
-    let add c : GraphMap<'v,'a,'b> =
+    let add c : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
         mapGraphAdd c (getL valLens c) (getL predLens c) (getL succLens c)
 
     let empty : Graph<'v,'a,'b> =
@@ -208,7 +210,23 @@ module Graph =
     let isEmpty (g: Graph<_,_,_>) =
         M.isEmpty g
 
-    (* Listing
+    (* Maps
+
+       Functions for mapping over contexts, or parts of contexts. Again, given
+       an optimized representation, we use functions for the underlying data
+       structure. Strictly speaking the functions mapNodes and mapEdges map over
+       node and edge *labels*, but for clarity this is assumed. *)
+
+    let map f : Graph<'v,'a,'b> -> Graph<'v,'c,'d> =
+        M.map (fun v mc -> (toContext v >> f >> fromContext) mc)
+
+    let mapNodes f : Graph<'v,'a,'b> -> Graph<'v,'c,'b> =
+        M.map (mapSnd (fun (p, l, s) -> p, f l, s))
+
+    let mapEdges f : Graph<'v,'a,'b> -> Graph<'v,'a,'c> =
+        M.map (mapSnd (fun (p, l, s) -> M.map (mapSnd f) p, l, M.map (mapSnd f) s))
+
+    (* Projection
 
        Functions for listing elements of a graph. As we are using
        an optimized representation, these functions can be implemented in a more
@@ -216,20 +234,34 @@ module Graph =
        for the underlying representation data structure. *)
 
     let nodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Node<'v,'a> list =
-        M.toList >> L.map (fun (v, (_, l, _)) -> v, l)
+           M.toList
+        >> L.map (fun (v, (_, l, _)) -> v, l)
+        
 
-    (* Mapping
+    let edges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Edge<'v,'b> list =
+           M.toList 
+        >> L.map (fun (v, (_, _, s)) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s) 
+        >> L.concat
 
-       Functions for mapping over contexts, or parts of contexts. Again, given
-       an optimized representation, we use functions for the underlying data
-       structure. Strictly speaking the functions mapNodes and mapEdges map over
-       node and edge *labels*, but for clarity this is assumed. *)
+    let containsNode v : Graph<'v,'a,'b> -> bool =
+        M.containsKey v
 
-    let map f : GraphMap<'v,'a,'b> =
-        M.map (fun v mc -> modL (idLens <--> mcontextIso v) f mc)
+    let countNodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
+           M.toList 
+        >> L.length
 
-    let mapNodes f : GraphMap<'v,'a,'b> =
-        M.map (mapSnd (modL mvalLens f))
+    let countEdges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
+           M.toList 
+        >> L.map (fun (_, (_, _, s)) -> (M.toList >> L.length) s) 
+        >> L.sum
 
-    let mapEdges f : GraphMap<'v,'a,'b> =
-        M.map (mapSnd (modL mpredLens (M.map (mapSnd f)) >> modL msuccLens (M.map (mapSnd f))))
+    (* Inspection
+
+       Functions for inspecting graphs, and common properties of nodes and
+       edges within a graph. *)
+
+    let tryFind v : Graph<'v,'a,'b> -> Node<'v,'a> option =
+        M.tryFind v >> Option.map (fun (_, l, _) -> v, l)
+
+    let find v =
+        tryFind v >> function | Some n -> n | _ -> failwith (sprintf "Node %s Not Found" v)
