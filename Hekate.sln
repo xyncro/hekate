@@ -32,6 +32,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "references", "references", 
 		src\Hekate\Hekate.fsproj.paket.references = src\Hekate\Hekate.fsproj.paket.references
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{14C75A62-0976-4CF3-9D8B-8A68B19F3026}"
+	ProjectSection(SolutionItems) = preProject
+		nuget\Hekate.nuspec = nuget\Hekate.nuspec
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,5 +66,6 @@ Global
 		{5001D89F-444B-4C5B-B85E-FF69DAD12DFE} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
 		{66F030C1-CE2E-4C56-A13E-D3976B005848} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
 		{C7073A13-4414-47A7-B2EC-03D3939DB255} = {66F030C1-CE2E-4C56-A13E-D3976B005848}
+		{14C75A62-0976-4CF3-9D8B-8A68B19F3026} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
 	EndGlobalSection
 EndGlobal

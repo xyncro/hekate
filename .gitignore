@@ -183,3 +183,5 @@ UpgradeLog*.htm
 FakesAssemblies/
 
 .paket/paket.exe
+
+temp

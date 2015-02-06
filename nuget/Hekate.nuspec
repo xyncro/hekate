@@ -6,12 +6,12 @@
     <title>@project@</title>
     <authors>@authors@</authors>
     <owners>@authors@</owners>
-    <projectUrl>https://github.com/xyncro/aether</projectUrl>
-    <licenseUrl>https://github.com/xyncro/aether/blob/master/LICENSE.md</licenseUrl>
+    <projectUrl>https://github.com/xyncro/hekate</projectUrl>
+    <licenseUrl>https://github.com/xyncro/hekate/blob/master/LICENSE.md</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Total/Partial Lenses for F#</description>
-    <tags>lens lenses f#</tags>
-    <copyright>Copyright Xyncro Ltd 2014</copyright>
+    <description>Functional Graphs for F#</description>
+    <tags>functional graphs inductive fgl f#</tags>
+    <copyright>Copyright Xyncro Ltd 2015</copyright>
     @dependencies@
   </metadata>
   @files@
