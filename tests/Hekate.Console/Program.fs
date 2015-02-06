@@ -16,9 +16,11 @@ let main _ =
     let edgeCount = Graph.countEdges g1
     let contains1 = Graph.containsNode 1 g1
     let contains4 = Graph.containsNode 4 g1
-    let n1 = Graph.tryFind 1 g1
-    let n4 = Graph.tryFind 4 g1
+    let n1 = Graph.tryFindNode 1 g1
+    let n4 = Graph.tryFindNode 4 g1
 
     let g2 = Graph.mapNodes (string) g1
- 
+
+    
+
     0

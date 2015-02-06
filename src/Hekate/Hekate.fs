@@ -72,6 +72,10 @@ type Edge<'v,'b> =
 type Adj<'v,'b> =
     ('b * 'v) list
 
+/// <summary>
+/// A single Context which may be composed with a <see cref="Graph{v,a,b}" />
+/// to form a new <see cref="Graph{v,a,b}" />.
+/// </summary>
 type Context<'v,'a,'b> =
     Adj<'v,'b> * 'v * 'a * Adj<'v,'b>
 
@@ -166,6 +170,10 @@ module Graph =
         >> flip (L.fold (fun g (l, a) -> setPL (addPLens msuccLens a v) l g)) p
         >> flip (L.fold (fun g (l, a) -> setPL (addPLens mpredLens a v) l g)) s
 
+    /// <summary>
+    /// Adds a <see cref="Context{v,a,b}" /> to a Graph.
+    /// </summary>
+    /// <param name="c">The new <see cref="Context{v,a,b}" /> to be added.</param>
     let add c : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
         mapGraphAdd c (getL valLens c) (getL predLens c) (getL succLens c)
 
@@ -228,15 +236,14 @@ module Graph =
 
     (* Projection
 
-       Functions for listing elements of a graph. As we are using
-       an optimized representation, these functions can be implemented in a more
-       efficient way than the standard application of ufold, using the functions
-       for the underlying representation data structure. *)
+       Functions for projects of a graph, either to elements of a graph or to a new
+       graph. As we are using an optimized representation, these functions can be
+       implemented in a more efficient way than the standard application of ufold,
+       using the functions for the underlying representation data structure. *)
 
     let nodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Node<'v,'a> list =
            M.toList
         >> L.map (fun (v, (_, l, _)) -> v, l)
-        
 
     let edges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Edge<'v,'b> list =
            M.toList 
@@ -252,16 +259,21 @@ module Graph =
 
     let countEdges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
            M.toList 
-        >> L.map (fun (_, (_, _, s)) -> (M.toList >> L.length) s) 
+        >> L.map (fun (_, (_, _, s)) -> (M.toList >> L.length) s)
         >> L.sum
+
+    let rev<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+        M.map (fun _ (p, l, s) -> (s, l, p))
 
     (* Inspection
 
        Functions for inspecting graphs, and common properties of nodes and
        edges within a graph. *)
 
-    let tryFind v : Graph<'v,'a,'b> -> Node<'v,'a> option =
+    let tryFindNode v : Graph<'v,'a,'b> -> Node<'v,'a> option =
         M.tryFind v >> Option.map (fun (_, l, _) -> v, l)
 
-    let find v =
-        tryFind v >> function | Some n -> n | _ -> failwith (sprintf "Node %s Not Found" v)
+    let findNode v =
+           tryFindNode v 
+        >> function | Some n -> n 
+                    | _ -> failwith (sprintf "Node %A Not Found" v)
