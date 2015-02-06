@@ -6,4 +6,3 @@ nuget Fake
 nuget Nuget.CommandLine
 nuget NUnit
 nuget Unquote
-nuget Aether
