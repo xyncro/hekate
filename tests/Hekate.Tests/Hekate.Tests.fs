@@ -91,3 +91,11 @@ let ``tryFindNode behaves correctly`` () =
 let ``findNode behaves correctly`` () =
     Graph.findNode 1 g2 =? (1, "one")
     raises<exn> <@ Graph.findNode 4 g2 @>
+
+[<Test>]
+let ``rev behaves correctly`` () =
+    let g3 = Graph.rev g2
+    let g4 = Graph.removeEdge (1, 3) g3
+
+    Graph.countEdges g3 =? 4
+    Graph.countEdges g4 =? 3
