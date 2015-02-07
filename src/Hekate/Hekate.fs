@@ -235,6 +235,11 @@ let private isEmpty<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> bool =
    Useful functions defined in terms of the Basic Graph Operations, though
    not expected to be used directly. *)
 
+let private context v =
+       decomposeSpecific v
+    >> function | Some c, _ -> Some c
+                | _ -> None
+
 let rec private ufold f u =
        decompose
     >> function | Some c, g -> f c (ufold f u g)
@@ -301,16 +306,15 @@ module Graph =
     let empty =
         empty
 
-    (* Queries *)
+    (* Properties *)
 
     let isEmpty<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> bool =
         isEmpty
 
     let containsNode v : Graph<'v,'a,'b> -> bool =
 #if inductive
-           decomposeSpecific v
-        >> function | Some _, _ -> true
-                    | _ -> false
+           context v
+        >> Option.isSome
 #else
         M.containsKey v
 #endif
@@ -391,13 +395,12 @@ module Graph =
         M.map (fun _ (p, l, s) -> (s, l, p))
 #endif
 
-    (* Inspection *)
+    (* Query *)
 
     let tryFindNode v : Graph<'v,'a,'b> -> LNode<'v,'a> option =
 #if inductive
-           decomposeSpecific v
-        >> function | Some (_, v, l, _), _ -> Some (v, l)
-                    | _ -> None
+           context v
+        >> Option.map (fun (_, _, l, _) -> v, l)
 #else
            M.tryFind v
         >> Option.map (fun (_, l, _) -> v, l)
@@ -407,3 +410,77 @@ module Graph =
            tryFindNode v 
         >> function | Some n -> n 
                     | _ -> failwith (sprintf "Node %A Not Found" v)
+
+    (* Adjacency/Degree *)
+
+    let neighbours v =
+#if inductive
+           context v
+        >> Option.map (fun (p, _, _, s) -> L.map swap p @ L.map swap s)
+#else
+           M.tryFind v
+        >> Option.map (fun (p, _, s) -> M.toList p @ M.toList s)
+#endif
+
+    let successors v =
+#if inductive
+           context v
+        >> Option.map (fun (_, _, _, s) -> L.map swap s)
+#else
+           M.tryFind v
+        >> Option.map (fun (_, _, s) -> M.toList s)
+#endif
+
+    let predecessors v =
+#if inductive
+           context v
+        >> Option.map (fun (p, _, _, _) -> L.map swap p)
+#else
+           M.tryFind v
+        >> Option.map (fun (p, _, _) -> M.toList p)
+#endif
+
+    let outward v =
+#if inductive
+           context v
+        >> Option.map (fun (_, _, _, s) -> L.map (fun (b, v') -> v, v', b) s)
+#else
+           M.tryFind v
+        >> Option.map (fun (_, _, s) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s)
+#endif
+
+    let inward v =
+#if inductive
+           context v
+        >> Option.map (fun (p, _, _, _) -> L.map (fun (b, v') -> v', v, b) p)
+#else
+           M.tryFind v
+        >> Option.map (fun (p, _, _) -> (M.toList >> L.map (fun (v', b) -> v', v, b)) p)
+#endif
+
+    let degree v =
+#if inductive
+           context v
+        >> Option.map (fun (p, _, _, s) -> L.length p + L.length s)
+#else
+           M.tryFind v
+        >> Option.map (fun (p, _, s) -> (M.toList >> L.length) p + (M.toList >> L.length) s)
+#endif
+
+    let outwardDegree v =
+#if inductive
+           context v
+        >> Option.map (fun (_, _, _, s) -> L.length s)
+#else
+           M.tryFind v
+        >> Option.map (fun (_, _, s) -> (M.toList >> L.length) s)
+#endif
+
+    let inwardDegree v =
+#if inductive
+           context v
+        >> Option.map (fun (p, _, _, _) -> L.length p)
+#else
+           M.tryFind v
+        >> Option.map (fun (p, _, _) -> (M.toList >> L.length) p)
+#endif

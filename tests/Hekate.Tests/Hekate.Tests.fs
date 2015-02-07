@@ -99,3 +99,49 @@ let ``rev behaves correctly`` () =
 
     Graph.countEdges g3 =? 4
     Graph.countEdges g4 =? 3
+
+(* Adjacency/Degree *)
+
+[<Test>]
+let ``neighbours behaves correctly`` () =
+    Graph.neighbours 1 g2
+        =? Some [ 2, "left"
+                  3, "up"
+                  2, "right" ]
+
+[<Test>]
+let ``successors behaves correctly`` () =
+    Graph.successors 1 g2
+        =? Some [ 2, "right" ]    
+
+[<Test>]
+let ``predecessors behaves correctly`` () =
+    Graph.predecessors 1 g2 
+        =? Some [ 2, "left"
+                  3, "up" ]
+
+[<Test>]
+let ``outward behaves correctly`` () =
+    Graph.outward 1 g2 
+        =? Some [ 1, 2, "right" ]
+
+[<Test>]
+let ``inward behaves correctly`` () =
+    Graph.inward 1 g2 
+        =? Some [ 2, 1, "left"
+                  3, 1, "up" ]
+
+[<Test>]
+let ``degree behaves correctly`` () =
+    Graph.degree 1 g2 
+        =? Some 3
+
+[<Test>]
+let ``outwardDegree behaves correctly`` () =
+    Graph.outwardDegree 1 g2 
+        =? Some 1
+
+[<Test>]
+let ``inwardDegree behaves correctly`` () =
+    Graph.inwardDegree 1 g2 
+        =? Some 2
