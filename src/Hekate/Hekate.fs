@@ -140,107 +140,178 @@ let private toContext<'v,'a,'b when 'v: comparison> v : MContext<'v,'a,'b> -> Co
 let private mcontextIso v : Iso<MContext<'v,'a,'b>, Context<'v,'a,'b>> =
     toContext v, fromContext
 
-(* Composition *)
+(* Construction
 
-let private addMAdjPLens l a v =
+   The functions "Empty" and "&", forming the two basic construction
+   functions for the inductive definition fo a graph, as defined in the
+   table of Basic Graph Operations in [Erwig:2001ho].
+
+   "Empty" is defined as "empty", and "&" is defined as the function
+   "cons" (as it is spritually similar to a list-like cons operation).
+   "empty" is provided in a later part of Hekate, directly within the
+   Graph module.
+
+   We move away from the operator syntax with the expectation that
+   the add function is pipe-friendly. *)
+
+let private conMAdjPLens l a v =
     mapPLens a >?-> l >??> mapPLens v
 
-let private mapGraphAdd c v p s =
+let private consGraph c v p s =
        setPL (mapPLens v <?-> mcontextIso v) c
-    >> flip (L.fold (fun g (l, a) -> setPL (addMAdjPLens msuccLens a v) l g)) p
-    >> flip (L.fold (fun g (l, a) -> setPL (addMAdjPLens mpredLens a v) l g)) s
+    >> flip (L.fold (fun g (l, a) -> setPL (conMAdjPLens msuccLens a v) l g)) p
+    >> flip (L.fold (fun g (l, a) -> setPL (conMAdjPLens mpredLens a v) l g)) s
 
-let private add (c: Context<'v,'a,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-    mapGraphAdd c (getL valLens c) (getL predLens c) (getL succLens c)
+let private cons (c: Context<'v,'a,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+    consGraph c (getL valLens c) (getL predLens c) (getL succLens c)
 
-(* Extraction
+(* Decomposition
 
-    Functions for decomposing an existent graph through a process
-    of matching, as defined in the table of Basic Graph Operations
-    in [Erqig:2001ho].
+   Functions for decomposing an existent graph through a process
+   of matching, as defined in the table of Basic Graph Operations
+   in [Erqig:2001ho].
    
-    The Empty-match function is named "isEmpty", the "&-match" function
-    becomes "extractAny", and the "&v" function becomes "extractSpecific", to
-    better align with F# expectations. In this case "extract" is felt to be
-    a better choice of verb than "match", both due to the nature of the function
-    and the overloading of meaning of the "match" verb within F#. *)
+   The Empty-match function is named "isEmpty" and forms part of the public
+   API for Hekate and is thus defined later in the Graph module. The "&-match"
+   function becomes "decompose", and the "&v" function becomes "decomposeSpecific", to
+   better align with F# expectations. In this case "decompose" is felt to be
+   a better choice of verb than "match", both due to the nature of the function
+   and the overloading of meaning of the "match" verb within F#. *)
 
-let private extPLens l a =
+let private decPLens l a =
     mapPLens a >?-> l
 
-let private extractContext v =
+let private decomposeContext v =
        modL mpredLens (M.remove v) 
     >> modL msuccLens (M.remove v) 
     >> toContext v
 
-let private extractGraph v p s =
+let private decomposeGraph v p s =
        M.remove v
-    >> flip (L.fold (fun g (_, a) -> modPL (extPLens msuccLens a) (M.remove v) g)) p
-    >> flip (L.fold (fun g (_, a) -> modPL (extPLens mpredLens a) (M.remove v) g)) s
+    >> flip (L.fold (fun g (_, a) -> modPL (decPLens msuccLens a) (M.remove v) g)) p
+    >> flip (L.fold (fun g (_, a) -> modPL (decPLens mpredLens a) (M.remove v) g)) s
 
-let private extractSpecific v (g: Graph<'v,'a,'b>) =
+let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
     match M.tryFind v g with
     | Some mc ->
-        let c = extractContext v mc
-        let g = extractGraph v (getL predLens c) (getL succLens c) g
+        let c = decomposeContext v mc
+        let g = decomposeGraph v (getL predLens c) (getL succLens c) g
 
         Some c, g
     | _ ->
         None, g
 
+let private decompose (g: Graph<'v,'a,'b>) =
+    match M.tryFindKey (fun _ _ -> true) g with
+    | Some v -> decomposeSpecific v g
+    | _ -> None, g
+
 (* Graph
 
    The "public" API to Hekate is exposed as the Graph module, providing
-   a API stylistically similar to common F# modules like L, M, etc.
+   a API stylistically similar to common F# modules like List, Map, etc.
 
    F# naming conventions have been applied where relevant, in contrast to
    either FGL or [Erwig:2001ho]. *)
+
+
+
+// TODO: Implement classical inductive versions of functions, then
+// replace with optimized where possible. Write preamble to detail this.
+
+
 
 module Graph =
 
     (* Construction
 
-       The functions "Empty" and "&", forming the two basic construction
-       functions for the inductive definition fo a graph, as defined in the
-       table of Basic Graph Operations in [Erwig:2001ho].
+       Functions for constructing graphs, or for constructing new graphs
+       by adding or removing nodes or edges of existing graphs. "empty" is the
+       "Empty" function from the [Erwig:2001ho] table of Basic Graph
+       Operations.
 
-       "Empty" is defined as "empty", and "&" is defined as the function
-       "add". We move away from the operator syntax with the expectation that
-       the add function is pipe-friendly.
+       Due to our underlying representation we can implement
+       optimized versions of some of these functions (particularly the addition
+       functions) by using the properties of our representation, instead of more
+       normal basic approaches using "construct". *)
 
-       The functions are not exposed externally, but are used as the basis of
-       higher level functions exposed in later sections. *)
+    let addNode ((v, l): LNode<'v,'a>) =
+        cons ([], v, l, [])
+
+    let removeNode v =
+           decomposeSpecific v 
+        >> snd
+
+    let addEdge ((v1, v2, e): LEdge<'v,'b>) =
+           decomposeSpecific v1
+        >> function | Some (p, v, l, s), g -> cons (p, v, l, (e, v2) :: s) g
+                    | _, g -> g
+
+    let removeEdge ((v1, v2): Edge<'v>) =
+           decomposeSpecific v1
+        >> function | Some (p, v, l, s), g -> cons (p, v, l, L.filter (fun (_, v') -> v' <> v2) s) g
+                    | _, g -> g
+
+    (* Multipliers *)
+
+    let private fold f xs : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+        flip (L.fold (flip f)) xs
+
+    let addNodes ns =
+        fold addNode ns
+
+    let removeNodes ns =
+        fold removeNode ns
+
+    let addEdges es =
+        fold addEdge es
+
+    let removeEdges es =
+        fold removeEdge es
+
+    (* Creation *)
 
     let empty : Graph<'v,'a,'b> =
         M.empty
 
-    let addNode ((v, l): LNode<'v,'a>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-        setPL (mapPLens v) (M.empty, l, M.empty)
-
-    let addEdge ((v1, v2, l): LEdge<'v,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-           setPL (addMAdjPLens msuccLens v1 v2) l
-        >> setPL (addMAdjPLens mpredLens v2 v1) l
-
-    let addNodes ns : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-        flip (L.fold (flip addNode)) ns
-
-    let addEdges es : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-        flip (L.fold (flip addEdge)) es
-
     let create ns es : Graph<'v,'a,'b> =
         (addNodes ns >> addEdges es) empty
 
+    (* Queries
 
+       Functions for querying properties of a graph, such as emptiness,
+       number of nodes, edges, etc. *)
 
-    let isEmpty (g: Graph<_,_,_>) =
-        M.isEmpty g
+    let isEmpty<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> bool =
+#if optimize
+        M.isEmpty
+#else
+           decompose
+        >> function | Some _, _ -> false
+                    | _ -> true
+#endif
 
     let containsNode v : Graph<'v,'a,'b> -> bool =
+#if optimize
         M.containsKey v
+#else
+           decomposeSpecific v
+        >> function | Some _, _ -> true
+                    | _ -> false
+#endif
 
     let countNodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
+#if optimize
            M.toList 
         >> L.length
+#else
+        let rec count i =
+               decompose
+            >> function | Some _, g -> count (i + 1) g
+                        | _ -> i 
+
+        count 0
+#endif
 
     let countEdges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
            M.toList 

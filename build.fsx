@@ -13,16 +13,11 @@ let srcDir = tempDir + "/src"
 Target "Clean" (fun _ ->
     CleanDirs [ tempDir ])
 
-// Restore Packages
-
-Target "Restore" (fun _ ->
-    RestorePackages ())
-
 // Build
 
 Target "Build" (fun _ ->
     !! "src/**/*.fsproj"
-    |> MSBuildRelease srcDir "Build" 
+    |> MSBuildRelease srcDir "Build"
     |> Log "Build Source: ")
 
 // Publish
@@ -49,7 +44,6 @@ Target "Publish" (fun _ ->
 // Dependencies
 
 "Clean"
-    ==> "Restore"
     ==> "Build"
     ==> "Publish"
 
