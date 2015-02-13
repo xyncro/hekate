@@ -29,7 +29,7 @@ Target "Publish" (fun _ ->
               Project = "Hekate"
               OutputPath = tempDir
               WorkingDir = srcDir
-              Version = "0.2.0"
+              Version = "0.3.0"
               AccessKey = getBuildParamOrDefault "nuget_key" ""
               Publish = hasBuildParam "nuget_key"
               Dependencies =
