@@ -74,13 +74,6 @@ let private mapOne f a _ =
 let private mapTwo f _ b =
     f b
 
-(* Aliases
-   For concision using commonly used modules, we alias L and M to
-   L and M respectively. *)
-
-module L = List
-module M = Map
-
 (* Definitional Types and Lenses
 
    Types defining data structures which form the logical programming model
@@ -146,10 +139,10 @@ let private msuccLens : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
    the optmized representational model. *)
 
 let private fromAdj<'v,'b when 'v: comparison> : Adj<'v,'b> -> MAdj<'v,'b> =
-    L.map swap >> M.ofList
+    List.map swap >> Map.ofList
 
 let private toAdj<'v,'b when 'v: comparison> : MAdj<'v,'b> -> Adj<'v,'b> =
-    M.toList >> L.map swap
+    Map.toList >> List.map swap
 
 let private fromContext<'v,'a,'b when 'v: comparison> : Context<'v,'a,'b> -> MContext<'v,'a,'b> =
     fun (p, _, l, s) -> fromAdj p, l, fromAdj s
@@ -178,15 +171,15 @@ let private compMAdjPLens l a v =
     mapPLens a >?-> l >??> mapPLens v
 
 let private composeGraph c v p s =
-       setPL (mapPLens v <?-> mcontextIso v) c
-    >> flip (L.fold (fun g (l, a) -> setPL (compMAdjPLens msuccLens a v) l g)) p
-    >> flip (L.fold (fun g (l, a) -> setPL (compMAdjPLens mpredLens a v) l g)) s
+       c ^?= (mapPLens v <?-> mcontextIso v)
+    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdjPLens msuccLens a v) g)) p
+    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdjPLens mpredLens a v) g)) s
 
 let private compose (c: Context<'v,'a,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-    composeGraph c (getL valLens c) (getL predLens c) (getL succLens c)
+    composeGraph c (c ^. valLens) (c ^. predLens) (c ^. succLens)
 
 let private empty : Graph<'v,'a,'b> =
-    M.empty
+    Map.empty
 
 (* Decomposition
 
@@ -203,32 +196,32 @@ let private decPLens l a =
     mapPLens a >?-> l
 
 let private decomposeContext v =
-       modL mpredLens (M.remove v) 
-    >> modL msuccLens (M.remove v) 
+       Map.remove v ^%= mpredLens
+    >> Map.remove v ^%= msuccLens 
     >> toContext v
 
 let private decomposeGraph v p s =
-       M.remove v
-    >> flip (L.fold (fun g (_, a) -> modPL (decPLens msuccLens a) (M.remove v) g)) p
-    >> flip (L.fold (fun g (_, a) -> modPL (decPLens mpredLens a) (M.remove v) g)) s
+       Map.remove v
+    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= decPLens msuccLens a) g)) p
+    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= decPLens mpredLens a) g)) s
 
 let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
-    match M.tryFind v g with
+    match Map.tryFind v g with
     | Some mc ->
         let c = decomposeContext v mc
-        let g = decomposeGraph v (getL predLens c) (getL succLens c) g
+        let g = decomposeGraph v (c ^. predLens) (c ^. succLens) g
 
         Some c, g
     | _ ->
         None, g
 
 let private decompose (g: Graph<'v,'a,'b>) =
-    match M.tryFindKey (fun _ _ -> true) g with
+    match Map.tryFindKey (fun _ _ -> true) g with
     | Some v -> decomposeSpecific v g
     | _ -> None, g
 
 let private isEmpty<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> bool =
-    M.isEmpty
+    Map.isEmpty
 
 (* Functions
 
@@ -258,13 +251,13 @@ module Graph =
     (* Construction *)
 
     let private fold f xs : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-        flip (L.fold (flip f)) xs
+        flip (List.fold (flip f)) xs
 
     let addNode ((v, l): LNode<'v,'a>) =
 #if inductive
         compose ([], v, l, [])
 #else
-        M.add v (Map.empty, l, Map.empty)
+        Map.add v (Map.empty, l, Map.empty)
 #endif
 
     let removeNode v =
@@ -277,13 +270,13 @@ module Graph =
         >> function | Some (p, v, l, s), g -> compose (p, v, l, (e, v2) :: s) g
                     | _, g -> g
 #else
-           modPL (mapPLens v1 >?-> msuccLens) (M.add v2 e)
-        >> modPL (mapPLens v2 >?-> mpredLens) (M.add v1 e)
+           Map.add v2 e ^?%= (mapPLens v1 >?-> msuccLens)
+        >> Map.add v1 e ^?%= (mapPLens v2 >?-> mpredLens)
 #endif
 
     let removeEdge ((v1, v2): Edge<'v>) =
            decomposeSpecific v1
-        >> function | Some (p, v, l, s), g -> compose (p, v, l, L.filter (fun (_, v') -> v' <> v2) s) g
+        >> function | Some (p, v, l, s), g -> compose (p, v, l, List.filter (fun (_, v') -> v' <> v2) s) g
                     | _, g -> g
 
     let addNodes ns =
@@ -316,7 +309,7 @@ module Graph =
            context v
         >> Option.isSome
 #else
-        M.containsKey v
+        Map.containsKey v
 #endif
 
     let countNodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
@@ -324,18 +317,18 @@ module Graph =
         ufold (fun _ i -> 
             i + 1) 0
 #else
-           M.toList 
-        >> L.length
+           Map.toList 
+        >> List.length
 #endif
 
     let countEdges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
 #if inductive
         ufold (fun (p, _, _, s) i -> 
-            i + L.length p + L.length s) 0
+            i + List.length p + List.length s) 0
 #else
-           M.toList 
-        >> L.map (fun (_, (_, _, s)) -> (M.toList >> L.length) s)
-        >> L.sum
+           Map.toList 
+        >> List.map (fun (_, (_, _, s)) -> (Map.toList >> List.length) s)
+        >> List.sum
 #endif
 
     (* Mapping *)
@@ -345,7 +338,7 @@ module Graph =
         ufold (fun c g -> 
             compose (f c) g) empty
 #else
-        M.map (fun v mc -> (toContext v >> f >> fromContext) mc)
+        Map.map (fun v mc -> (toContext v >> f >> fromContext) mc)
 #endif
 
     let mapNodes f : Graph<'v,'a,'b> -> Graph<'v,'c,'b> =
@@ -353,15 +346,15 @@ module Graph =
         map (fun (p, v, l, s) -> 
             (p, v, f l, s))
 #else
-        M.map (mapTwo (fun (p, l, s) -> p, f l, s))
+        Map.map (mapTwo (fun (p, l, s) -> p, f l, s))
 #endif
 
     let mapEdges f : Graph<'v,'a,'b> -> Graph<'v,'a,'c> =
 #if inductive
         map (fun (p, v, l, s) -> 
-            (L.map (mapFst f) p, v, l, L.map (mapFst f) s))
+            (List.map (mapFst f) p, v, l, List.map (mapFst f) s))
 #else
-        M.map (mapTwo (fun (p, l, s) -> M.map (mapTwo f) p, l, M.map (mapTwo f) s))
+        Map.map (mapTwo (fun (p, l, s) -> Map.map (mapTwo f) p, l, Map.map (mapTwo f) s))
 #endif
 
     (* Projection *)
@@ -371,20 +364,20 @@ module Graph =
         ufold (fun (_, v, l, _) ns -> 
             (v, l) :: ns) []
 #else
-           M.toList
-        >> L.map (fun (v, (_, l, _)) -> v, l)
+           Map.toList
+        >> List.map (fun (v, (_, l, _)) -> v, l)
 #endif
 
     let edges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LEdge<'v,'b> list =
 #if inductive
         ufold (fun (p, v, _, s) es -> 
-              L.map (fun (l, v') -> v', v, l) p 
-            @ L.map (fun (l, v') -> v, v', l) s 
+              List.map (fun (l, v') -> v', v, l) p 
+            @ List.map (fun (l, v') -> v, v', l) s 
             @ es) []
 #else
-           M.toList 
-        >> L.map (fun (v, (_, _, s)) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s) 
-        >> L.concat
+           Map.toList 
+        >> List.map (fun (v, (_, _, s)) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s) 
+        >> List.concat
 #endif
 
     let rev<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
@@ -392,7 +385,7 @@ module Graph =
         map (fun (p, v, l, s) -> 
             (s, v, l, p))
 #else
-        M.map (fun _ (p, l, s) -> (s, l, p))
+        Map.map (fun _ (p, l, s) -> (s, l, p))
 #endif
 
     (* Query *)
@@ -402,7 +395,7 @@ module Graph =
            context v
         >> Option.map (fun (_, _, l, _) -> v, l)
 #else
-           M.tryFind v
+           Map.tryFind v
         >> Option.map (fun (_, l, _) -> v, l)
 #endif
 
@@ -416,71 +409,71 @@ module Graph =
     let neighbours v =
 #if inductive
            context v
-        >> Option.map (fun (p, _, _, s) -> L.map swap p @ L.map swap s)
+        >> Option.map (fun (p, _, _, s) -> List.map swap p @ List.map swap s)
 #else
-           M.tryFind v
-        >> Option.map (fun (p, _, s) -> M.toList p @ M.toList s)
+           Map.tryFind v
+        >> Option.map (fun (p, _, s) -> Map.toList p @ Map.toList s)
 #endif
 
     let successors v =
 #if inductive
            context v
-        >> Option.map (fun (_, _, _, s) -> L.map swap s)
+        >> Option.map (fun (_, _, _, s) -> List.map swap s)
 #else
-           M.tryFind v
-        >> Option.map (fun (_, _, s) -> M.toList s)
+           Map.tryFind v
+        >> Option.map (fun (_, _, s) -> Map.toList s)
 #endif
 
     let predecessors v =
 #if inductive
            context v
-        >> Option.map (fun (p, _, _, _) -> L.map swap p)
+        >> Option.map (fun (p, _, _, _) -> List.map swap p)
 #else
-           M.tryFind v
-        >> Option.map (fun (p, _, _) -> M.toList p)
+           Map.tryFind v
+        >> Option.map (fun (p, _, _) -> Map.toList p)
 #endif
 
     let outward v =
 #if inductive
            context v
-        >> Option.map (fun (_, _, _, s) -> L.map (fun (b, v') -> v, v', b) s)
+        >> Option.map (fun (_, _, _, s) -> List.map (fun (b, v') -> v, v', b) s)
 #else
-           M.tryFind v
-        >> Option.map (fun (_, _, s) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s)
+           Map.tryFind v
+        >> Option.map (fun (_, _, s) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s)
 #endif
 
     let inward v =
 #if inductive
            context v
-        >> Option.map (fun (p, _, _, _) -> L.map (fun (b, v') -> v', v, b) p)
+        >> Option.map (fun (p, _, _, _) -> List.map (fun (b, v') -> v', v, b) p)
 #else
-           M.tryFind v
-        >> Option.map (fun (p, _, _) -> (M.toList >> L.map (fun (v', b) -> v', v, b)) p)
+           Map.tryFind v
+        >> Option.map (fun (p, _, _) -> (Map.toList >> List.map (fun (v', b) -> v', v, b)) p)
 #endif
 
     let degree v =
 #if inductive
            context v
-        >> Option.map (fun (p, _, _, s) -> L.length p + L.length s)
+        >> Option.map (fun (p, _, _, s) -> List.length p + List.length s)
 #else
-           M.tryFind v
-        >> Option.map (fun (p, _, s) -> (M.toList >> L.length) p + (M.toList >> L.length) s)
+           Map.tryFind v
+        >> Option.map (fun (p, _, s) -> (Map.toList >> List.length) p + (Map.toList >> List.length) s)
 #endif
 
     let outwardDegree v =
 #if inductive
            context v
-        >> Option.map (fun (_, _, _, s) -> L.length s)
+        >> Option.map (fun (_, _, _, s) -> List.length s)
 #else
-           M.tryFind v
-        >> Option.map (fun (_, _, s) -> (M.toList >> L.length) s)
+           Map.tryFind v
+        >> Option.map (fun (_, _, s) -> (Map.toList >> List.length) s)
 #endif
 
     let inwardDegree v =
 #if inductive
            context v
-        >> Option.map (fun (p, _, _, _) -> L.length p)
+        >> Option.map (fun (p, _, _, _) -> List.length p)
 #else
-           M.tryFind v
-        >> Option.map (fun (p, _, _) -> (M.toList >> L.length) p)
+           Map.tryFind v
+        >> Option.map (fun (p, _, _) -> (Map.toList >> List.length) p)
 #endif
