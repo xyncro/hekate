@@ -52,6 +52,11 @@ let ``removeEdge behaves correctly`` () =
 (* Queries *)
 
 [<Test>]
+let ``containsEdge behaves correctly`` () =
+    Graph.containsEdge 1 2 g2 =? true
+    Graph.containsEdge 1 3 g2 =? false
+
+[<Test>]
 let ``containsNode behaves correctly`` () =
     Graph.containsNode 1 g2 =? true
     Graph.containsNode 4 g2 =? false
@@ -64,8 +69,14 @@ let ``isEmpty behaves correctly`` () =
 (* Mapping *)
 
 [<Test>]
+let ``mapEdges behaves correctly`` () =
+    let g3 = Graph.mapEdges (fun v1 v2 (e: string) -> sprintf "%i.%i.%s" v1 v2 e) g2
+
+    Graph.findEdge 1 2 g3 =? (1, 2, "1.2.right")
+
+[<Test>]
 let ``mapNodes behaves correctly`` () =
-    let g3 = Graph.mapNodes (fun (n: string) -> n.ToUpper ()) g2
+    let g3 = Graph.mapNodes (fun _ (n: string) -> n.ToUpper ()) g2
 
     snd (Graph.findNode 1 g2) =? "one"
     snd (Graph.findNode 1 g3) =? "ONE"
