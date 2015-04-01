@@ -62,18 +62,6 @@ let private flip f a b =
 let private swap (a, b) =
     (b, a)
 
-let private mapFst f (a, b) =
-    (f a, b)
-
-let private mapSnd f (a, b) =
-    (a, f b)
-
-let private mapOne f a _ =
-    f a
-
-let private mapTwo f _ b =
-    f b
-
 (* Definitional Types and Lenses
 
    Types defining data structures which form the logical programming model
@@ -228,15 +216,13 @@ let private isEmpty<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> bool =
    Useful functions defined in terms of the Basic Graph Operations, though
    not expected to be used directly. *)
 
-let private context v =
-       decomposeSpecific v
-    >> function | Some c, _ -> Some c
-                | _ -> None
-
 let rec private ufold f u =
        decompose
     >> function | Some c, g -> f c (ufold f u g)
                 | _ -> u
+
+let private fold f xs : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
+    flip (List.fold (flip f)) xs
 
 (* Graph
 
@@ -250,34 +236,21 @@ module Graph =
 
     (* Construction *)
 
-    let private fold f xs : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-        flip (List.fold (flip f)) xs
-
     let addNode ((v, l): LNode<'v,'a>) =
-#if inductive
-        compose ([], v, l, [])
-#else
         Map.add v (Map.empty, l, Map.empty)
-#endif
 
     let removeNode v =
-           decomposeSpecific v 
-        >> snd
+            decomposeSpecific v 
+         >> snd
 
     let addEdge ((v1, v2, e): LEdge<'v,'b>) =
-#if inductive
-           decomposeSpecific v1
-        >> function | Some (p, v, l, s), g -> compose (p, v, l, (e, v2) :: s) g
-                    | _, g -> g
-#else
-           Map.add v2 e ^?%= (mapPLens v1 >?-> msuccLens)
-        >> Map.add v1 e ^?%= (mapPLens v2 >?-> mpredLens)
-#endif
+            Map.add v2 e ^?%= (mapPLens v1 >?-> msuccLens)
+         >> Map.add v1 e ^?%= (mapPLens v2 >?-> mpredLens)
 
     let removeEdge ((v1, v2): Edge<'v>) =
-           decomposeSpecific v1
-        >> function | Some (p, v, l, s), g -> compose (p, v, l, List.filter (fun (_, v') -> v' <> v2) s) g
-                    | _, g -> g
+            decomposeSpecific v1
+         >> function | Some (p, v, l, s), g -> compose (p, v, l, List.filter (fun (_, v') -> v' <> v2) s) g
+                     | _, g -> g
 
     let addNodes ns =
         fold addNode ns
@@ -305,175 +278,102 @@ module Graph =
         isEmpty
 
     let containsNode v : Graph<'v,'a,'b> -> bool =
-#if inductive
-           context v
-        >> Option.isSome
-#else
         Map.containsKey v
-#endif
+
+    let containsEdge v1 v2 : Graph<'v,'a,'b> -> bool =
+            Map.tryFind v1
+         >> Option.bind (fun (_, _, s) -> Map.tryFind v2 s)
+         >> Option.isSome
 
     let countNodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-#if inductive
-        ufold (fun _ i -> 
-            i + 1) 0
-#else
-           Map.toList 
-        >> List.length
-#endif
+            Map.toList 
+         >> List.length
 
     let countEdges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-#if inductive
-        ufold (fun (p, _, _, s) i -> 
-            i + List.length p + List.length s) 0
-#else
-           Map.toList 
-        >> List.map (fun (_, (_, _, s)) -> (Map.toList >> List.length) s)
-        >> List.sum
-#endif
+            Map.toList 
+         >> List.map (fun (_, (_, _, s)) -> (Map.toList >> List.length) s)
+         >> List.sum
 
     (* Mapping *)
 
     let map f : Graph<'v,'a,'b> -> Graph<'v,'c,'d> =
-#if inductive
-        ufold (fun c g -> 
-            compose (f c) g) empty
-#else
         Map.map (fun v mc -> (toContext v >> f >> fromContext) mc)
-#endif
 
     let mapNodes f : Graph<'v,'a,'b> -> Graph<'v,'c,'b> =
-#if inductive
-        map (fun (p, v, l, s) -> 
-            (p, v, f l, s))
-#else
-        Map.map (mapTwo (fun (p, l, s) -> p, f l, s))
-#endif
+        Map.map (fun v (p, l, s) ->
+            p, f v l, s)
 
     let mapEdges f : Graph<'v,'a,'b> -> Graph<'v,'a,'c> =
-#if inductive
-        map (fun (p, v, l, s) -> 
-            (List.map (mapFst f) p, v, l, List.map (mapFst f) s))
-#else
-        Map.map (mapTwo (fun (p, l, s) -> Map.map (mapTwo f) p, l, Map.map (mapTwo f) s))
-#endif
+        Map.map (fun v (p, l, s) ->
+            Map.map (fun v' x -> f v' v x) p,
+            l,
+            Map.map (fun v' x -> f v v' x) s)
 
     (* Projection *)
 
     let nodes<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LNode<'v,'a> list =
-#if inductive
-        ufold (fun (_, v, l, _) ns -> 
-            (v, l) :: ns) []
-#else
            Map.toList
         >> List.map (fun (v, (_, l, _)) -> v, l)
-#endif
 
     let edges<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LEdge<'v,'b> list =
-#if inductive
-        ufold (fun (p, v, _, s) es -> 
-              List.map (fun (l, v') -> v', v, l) p 
-            @ List.map (fun (l, v') -> v, v', l) s 
-            @ es) []
-#else
            Map.toList 
         >> List.map (fun (v, (_, _, s)) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s) 
         >> List.concat
-#endif
 
     let rev<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-#if inductive
-        map (fun (p, v, l, s) -> 
-            (s, v, l, p))
-#else
         Map.map (fun _ (p, l, s) -> (s, l, p))
-#endif
 
     (* Query *)
 
+    let tryFindEdge v1 v2 : Graph<'v,'a,'b> -> LEdge<'v,'b> option =
+            Map.tryFind v1
+         >> Option.bind (fun (_, _, s) -> Map.tryFind v2 s)
+         >> Option.map (fun b -> (v1, v2, b))
+
+    let findEdge v1 v2 =
+            tryFindEdge v1 v2
+         >> function | Some e -> e
+                     | _ -> failwith (sprintf "Edge %A %A Not Found" v1 v2)
+
     let tryFindNode v : Graph<'v,'a,'b> -> LNode<'v,'a> option =
-#if inductive
-           context v
-        >> Option.map (fun (_, _, l, _) -> v, l)
-#else
-           Map.tryFind v
-        >> Option.map (fun (_, l, _) -> v, l)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (_, l, _) -> v, l)
 
     let findNode v =
-           tryFindNode v 
-        >> function | Some n -> n 
-                    | _ -> failwith (sprintf "Node %A Not Found" v)
+            tryFindNode v 
+         >> function | Some n -> n 
+                     | _ -> failwith (sprintf "Node %A Not Found" v)
 
     (* Adjacency/Degree *)
 
     let neighbours v =
-#if inductive
-           context v
-        >> Option.map (fun (p, _, _, s) -> List.map swap p @ List.map swap s)
-#else
-           Map.tryFind v
-        >> Option.map (fun (p, _, s) -> Map.toList p @ Map.toList s)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (p, _, s) -> Map.toList p @ Map.toList s)
 
     let successors v =
-#if inductive
-           context v
-        >> Option.map (fun (_, _, _, s) -> List.map swap s)
-#else
-           Map.tryFind v
-        >> Option.map (fun (_, _, s) -> Map.toList s)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (_, _, s) -> Map.toList s)
 
     let predecessors v =
-#if inductive
-           context v
-        >> Option.map (fun (p, _, _, _) -> List.map swap p)
-#else
-           Map.tryFind v
-        >> Option.map (fun (p, _, _) -> Map.toList p)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (p, _, _) -> Map.toList p)
 
     let outward v =
-#if inductive
-           context v
-        >> Option.map (fun (_, _, _, s) -> List.map (fun (b, v') -> v, v', b) s)
-#else
-           Map.tryFind v
-        >> Option.map (fun (_, _, s) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (_, _, s) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s)
 
     let inward v =
-#if inductive
-           context v
-        >> Option.map (fun (p, _, _, _) -> List.map (fun (b, v') -> v', v, b) p)
-#else
-           Map.tryFind v
-        >> Option.map (fun (p, _, _) -> (Map.toList >> List.map (fun (v', b) -> v', v, b)) p)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (p, _, _) -> (Map.toList >> List.map (fun (v', b) -> v', v, b)) p)
 
     let degree v =
-#if inductive
-           context v
-        >> Option.map (fun (p, _, _, s) -> List.length p + List.length s)
-#else
-           Map.tryFind v
-        >> Option.map (fun (p, _, s) -> (Map.toList >> List.length) p + (Map.toList >> List.length) s)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (p, _, s) -> (Map.toList >> List.length) p + (Map.toList >> List.length) s)
 
     let outwardDegree v =
-#if inductive
-           context v
-        >> Option.map (fun (_, _, _, s) -> List.length s)
-#else
-           Map.tryFind v
-        >> Option.map (fun (_, _, s) -> (Map.toList >> List.length) s)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (_, _, s) -> (Map.toList >> List.length) s)
 
     let inwardDegree v =
-#if inductive
-           context v
-        >> Option.map (fun (p, _, _, _) -> List.length p)
-#else
-           Map.tryFind v
-        >> Option.map (fun (p, _, _) -> (Map.toList >> List.length) p)
-#endif
+            Map.tryFind v
+         >> Option.map (fun (p, _, _) -> (Map.toList >> List.length) p)
