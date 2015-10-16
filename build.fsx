@@ -29,12 +29,11 @@ Target "Publish" (fun _ ->
               Project = "Hekate"
               OutputPath = tempDir
               WorkingDir = srcDir
-              Version = "1.0.0"
+              Version = "1.0.1"
               AccessKey = getBuildParamOrDefault "nuget_key" ""
               Publish = hasBuildParam "nuget_key"
               Dependencies =
-                [ "Aether", GetPackageVersion "packages" "Aether"
-                  "FSharp.Core", GetPackageVersion "packages" "FSharp.Core" ]
+                [ "Aether", GetPackageVersion "packages" "Aether" ]
               Files = 
                 [ "Hekate.dll", Some "lib/net40", None
                   "Hekate.pdb", Some "lib/net40", None

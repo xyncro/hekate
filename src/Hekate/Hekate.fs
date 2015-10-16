@@ -113,10 +113,10 @@ type MGraph<'v,'a,'b> when 'v: comparison =
 type Graph<'v,'a,'b> when 'v: comparison =
     MGraph<'v,'a,'b>
 
-let private mpredLens : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
+let private mpred_ : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
     (fun (p, _, _) -> p), (fun p (_, l, s) -> (p, l, s))
 
-let private msuccLens : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
+let private msucc_ : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
     (fun (_, _, s) -> s), (fun s (p, l, _) -> (p, l, s))
 
 (* Mappings
@@ -143,7 +143,7 @@ let private toContext<'v,'a,'b when 'v: comparison> v : MContext<'v,'a,'b> -> Co
    Isomorphisms between data structures from the definitional and
    representational type families. *)
 
-let private mcontextIso v : Iso<MContext<'v,'a,'b>, Context<'v,'a,'b>> =
+let private mcontext_ v : Iso<MContext<'v,'a,'b>, Context<'v,'a,'b>> =
     toContext v, fromContext
 
 (* Construction
@@ -155,13 +155,13 @@ let private mcontextIso v : Iso<MContext<'v,'a,'b>, Context<'v,'a,'b>> =
    "Empty" is defined as "empty", and "&" is defined as the function
    "compose". *)
 
-let private compMAdjPLens l a v =
-    mapPLens a >?-> l >??> mapPLens v
+let private compMAdj_ l a v =
+    key_ a >?-> l >??> key_ v
 
 let private composeGraph c v p s =
-       c ^?= (mapPLens v <?-> mcontextIso v)
-    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdjPLens msuccLens a v) g)) p
-    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdjPLens mpredLens a v) g)) s
+       c ^?= (key_ v <?-> mcontext_ v)
+    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdj_ msucc_ a v) g)) p
+    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdj_ mpred_ a v) g)) s
 
 let private compose (c: Context<'v,'a,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
     composeGraph c (c ^. valLens) (c ^. predLens) (c ^. succLens)
@@ -180,18 +180,18 @@ let private empty : Graph<'v,'a,'b> =
    function becomes "decompose", and the "&v" function becomes "decomposeSpecific", to
    better align with F# expectations. *)
 
-let private decPLens l a =
-    mapPLens a >?-> l
+let private dec_ l a =
+    key_ a >?-> l
 
 let private decomposeContext v =
-       Map.remove v ^%= mpredLens
-    >> Map.remove v ^%= msuccLens 
+       Map.remove v ^%= mpred_
+    >> Map.remove v ^%= msucc_ 
     >> toContext v
 
 let private decomposeGraph v p s =
        Map.remove v
-    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= decPLens msuccLens a) g)) p
-    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= decPLens mpredLens a) g)) s
+    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= dec_ msucc_ a) g)) p
+    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= dec_ mpred_ a) g)) s
 
 let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
     match Map.tryFind v g with
@@ -244,8 +244,8 @@ module Graph =
          >> snd
 
     let addEdge ((v1, v2, e): LEdge<'v,'b>) =
-            Map.add v2 e ^?%= (mapPLens v1 >?-> msuccLens)
-         >> Map.add v1 e ^?%= (mapPLens v2 >?-> mpredLens)
+            Map.add v2 e ^?%= (key_ v1 >?-> msucc_)
+         >> Map.add v1 e ^?%= (key_ v2 >?-> mpred_)
 
     let removeEdge ((v1, v2): Edge<'v>) =
             decomposeSpecific v1
