@@ -86,13 +86,13 @@ type Adj<'v,'b> =
 type Context<'v,'a,'b> =
     Adj<'v,'b> * 'v * 'a * Adj<'v,'b>
 
-let private predLens : Lens<Context<'v,_,'b>, Adj<'v,'b>> =
+let private pred_ : Lens<Context<'v,_,'b>, Adj<'v,'b>> =
     (fun (p, _, _, _) -> p), (fun p (_, v, l, s) -> (p, v, l, s))
 
-let private valLens : Lens<Context<'v,_,_>, 'v> =
+let private val_ : Lens<Context<'v,_,_>, 'v> =
     (fun (_, v, _, _) -> v), (fun v (p, _, l, s) -> (p, v, l, s))
 
-let private succLens : Lens<Context<'v,_,'b>, Adj<'v,'b>> =
+let private succ_ : Lens<Context<'v,_,'b>, Adj<'v,'b>> =
     (fun (_, _, _, s) -> s), (fun s (p, v, l, _) -> (p, v, l, s))
 
 (* Representational Types and Lenses
@@ -164,7 +164,7 @@ let private composeGraph c v p s =
     >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdj_ mpred_ a v) g)) s
 
 let private compose (c: Context<'v,'a,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-    composeGraph c (c ^. valLens) (c ^. predLens) (c ^. succLens)
+    composeGraph c (c ^. val_) (c ^. pred_) (c ^. succ_)
 
 let private empty : Graph<'v,'a,'b> =
     Map.empty
@@ -197,7 +197,7 @@ let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
     match Map.tryFind v g with
     | Some mc ->
         let c = decomposeContext v mc
-        let g = decomposeGraph v (c ^. predLens) (c ^. succLens) g
+        let g = decomposeGraph v (c ^. pred_) (c ^. succ_) g
 
         Some c, g
     | _ ->
