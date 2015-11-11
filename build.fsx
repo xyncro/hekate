@@ -1,12 +1,11 @@
-#I "packages/FAKE/tools"
-#r "packages/FAKE/tools/FakeLib.dll"
+#I "packages/build/FAKE/tools"
+#r "packages/build/FAKE/tools/FakeLib.dll"
 
 open Fake
 
 // Dirs
 
-let tempDir = "./temp"
-let srcDir = tempDir + "/src"
+let tempDir = "temp"
 
 // Clean
 
@@ -16,34 +15,36 @@ Target "Clean" (fun _ ->
 // Build
 
 Target "Build" (fun _ ->
-    !! "src/**/*.fsproj"
-    |> MSBuildRelease srcDir "Build"
-    |> Log "Build Source: ")
+    build (fun x ->
+        { x with
+            Properties =
+                [ "Optimize",      environVarOrDefault "Build.Optimize"      "True"
+                  "DebugSymbols",  environVarOrDefault "Build.DebugSymbols"  "True"
+                  "Configuration", environVarOrDefault "Build.Configuration" "Release" ]
+            Targets =
+                [ "Build" ]
+            Verbosity = Some Quiet }) "Hekate.sln")
 
-// Publish
+// Package
 
-Target "Publish" (fun _ ->
-    NuGet (fun p ->
+Target "Pack" (fun _ ->
+    Paket.Pack (fun p ->
         { p with
-              Authors = [ "Andrew Cherry" ]
-              Project = "Hekate"
-              OutputPath = tempDir
-              WorkingDir = srcDir
-              Version = "1.0.1"
-              AccessKey = getBuildParamOrDefault "nuget_key" ""
-              Publish = hasBuildParam "nuget_key"
-              Dependencies =
-                [ "Aether", GetPackageVersion "packages" "Aether" ]
-              Files = 
-                [ "Hekate.dll", Some "lib/net40", None
-                  "Hekate.pdb", Some "lib/net40", None
-                  "Hekate.xml", Some "lib/net40", None ] })
-              "./nuget/Hekate.nuspec")
+            OutputPath = tempDir }))
+
+Target "Push" (fun _ ->
+    Paket.Push (fun p ->
+        { p with
+            WorkingDir = tempDir }))
 
 // Dependencies
 
+Target "Default" DoNothing
+
 "Clean"
     ==> "Build"
-    ==> "Publish"
+    ==> "Pack"
+    =?> ("Push", Option.isSome (environVarOrNone "nugetkey"))
+    ==> "Default"
 
-RunTargetOrDefault "Publish"
+RunTargetOrDefault "Default"

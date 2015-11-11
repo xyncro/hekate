@@ -1,8 +1,19 @@
 NUGET
   remote: http://nuget.org/api/v2
   specs:
-    Aether (7.0.1)
-    FAKE (4.7.1)
-    NuGet.CommandLine (2.8.6)
+    Aether (7.0.2)
+
+GROUP Build
+NUGET
+  remote: http://nuget.org/api/v2
+  specs:
+    FAKE (4.8.0)
+
+GROUP Test
+FRAMEWORK: >= NET45
+NUGET
+  remote: http://nuget.org/api/v2
+  specs:
+    FSharp.Core (3.1.2.5) - redirects: on
     NUnit (2.6.4)
     Unquote (3.1.0)
