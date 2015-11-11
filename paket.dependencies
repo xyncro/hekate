@@ -1,7 +1,18 @@
 source http://nuget.org/api/v2
 
-nuget Aether
-nuget Fake
-nuget Nuget.CommandLine
-nuget NUnit
-nuget Unquote
+nuget Aether 8.0.0-b3
+
+group Build
+
+  source http://nuget.org/api/v2
+
+  nuget Fake
+
+group Test
+
+  framework: >= net45
+  source http://nuget.org/api/v2
+
+  nuget FSharp.Core 3.1.2.5 redirects: on
+  nuget NUnit
+  nuget Unquote

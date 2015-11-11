@@ -186,3 +186,4 @@ FakesAssemblies/
 .paket/paket.exe
 
 temp
+packages

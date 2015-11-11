@@ -26,14 +26,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "paket", "paket", "{66F030C1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "references", "references", "{C7073A13-4414-47A7-B2EC-03D3939DB255}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EBEB99B1-10F0-45AC-A794-C4D37ECD43C9}"
 	ProjectSection(SolutionItems) = preProject
 		src\Hekate\Hekate.fsproj.paket.references = src\Hekate\Hekate.fsproj.paket.references
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{403BDD08-BDFA-48C4-9D73-09B9BC97459A}"
+	ProjectSection(SolutionItems) = preProject
 		tests\Hekate.Tests\Hekate.Tests.fsproj.paket.references = tests\Hekate.Tests\Hekate.Tests.fsproj.paket.references
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{14C75A62-0976-4CF3-9D8B-8A68B19F3026}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{ED1C8C65-1037-4035-B8B0-B00F667A96AE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A8440A13-5C8B-4C7F-97CC-3E125EEC75A4}"
 	ProjectSection(SolutionItems) = preProject
-		nuget\Hekate.nuspec = nuget\Hekate.nuspec
+		src\Hekate\Hekate.fsproj.paket.template = src\Hekate\Hekate.fsproj.paket.template
 	EndProjectSection
 EndProject
 Global
@@ -60,6 +68,9 @@ Global
 		{5001D89F-444B-4C5B-B85E-FF69DAD12DFE} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
 		{66F030C1-CE2E-4C56-A13E-D3976B005848} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
 		{C7073A13-4414-47A7-B2EC-03D3939DB255} = {66F030C1-CE2E-4C56-A13E-D3976B005848}
-		{14C75A62-0976-4CF3-9D8B-8A68B19F3026} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
+		{EBEB99B1-10F0-45AC-A794-C4D37ECD43C9} = {C7073A13-4414-47A7-B2EC-03D3939DB255}
+		{403BDD08-BDFA-48C4-9D73-09B9BC97459A} = {C7073A13-4414-47A7-B2EC-03D3939DB255}
+		{ED1C8C65-1037-4035-B8B0-B00F667A96AE} = {66F030C1-CE2E-4C56-A13E-D3976B005848}
+		{A8440A13-5C8B-4C7F-97CC-3E125EEC75A4} = {ED1C8C65-1037-4035-B8B0-B00F667A96AE}
 	EndGlobalSection
 EndGlobal
