@@ -1,6 +1,6 @@
 source http://nuget.org/api/v2
 
-nuget Aether
+nuget Aether 8.0.0-b3
 
 group Build
 

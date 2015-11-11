@@ -138,60 +138,49 @@ let private fromContext<'v,'a,'b when 'v: comparison> : Context<'v,'a,'b> -> MCo
 let private toContext<'v,'a,'b when 'v: comparison> v : MContext<'v,'a,'b> -> Context<'v,'a,'b> =
     fun (p, l, s) -> toAdj p, v, l, toAdj s
 
-(* Isomorphisms
-
-   Isomorphisms between data structures from the definitional and
-   representational type families. *)
-
-let private mcontext_ v : Iso<MContext<'v,'a,'b>, Context<'v,'a,'b>> =
-    toContext v, fromContext
-
 (* Construction
 
    The functions "Empty" and "&", forming the two basic construction
-   functions for the inductive definition fo a graph, as defined in the
+   functions for the inductive definition of a graph, as defined in the
    table of Basic Graph Operations in [Erwig:2001ho].
 
    "Empty" is defined as "empty", and "&" is defined as the function
    "compose". *)
 
-let private compMAdj_ l a v =
-    key_ a >?-> l >??> key_ v
-
-let private composeGraph c v p s =
-       c ^?= (key_ v <?-> mcontext_ v)
-    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdj_ msucc_ a v) g)) p
-    >> flip (List.fold (fun g (l, a) -> (l ^?= compMAdj_ mpred_ a v) g)) s
-
-let private compose (c: Context<'v,'a,'b>) : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-    composeGraph c (c ^. val_) (c ^. pred_) (c ^. succ_)
+type Id<'v> =
+    'v -> 'v
 
 let private empty : Graph<'v,'a,'b> =
     Map.empty
+
+let private composeGraph c v p s =
+        Lens.set (Map.value_ v) (Some (fromContext c))
+     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^?%= (Map.key_ v' >?-> msucc_)) g)) p
+     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^?%= (Map.key_ v' >?-> mpred_)) g)) s
+
+let private compose (c: Context<'v,'a,'b>) : Id<Graph<'v,'a,'b>> =
+    composeGraph c (c ^. val_) (c ^. pred_) (c ^. succ_)
 
 (* Decomposition
 
    Functions for decomposing an existent graph through a process
    of matching, as defined in the table of Basic Graph Operations
    in [Erqig:2001ho].
-   
+
    The Empty-match function is named "isEmpty" and forms part of the public
    API for Hekate and is thus defined later in the Graph module. The "&-match"
    function becomes "decompose", and the "&v" function becomes "decomposeSpecific", to
    better align with F# expectations. *)
 
-let private dec_ l a =
-    key_ a >?-> l
-
 let private decomposeContext v =
-       Map.remove v ^%= mpred_
-    >> Map.remove v ^%= msucc_ 
-    >> toContext v
+        Map.remove v ^%= mpred_
+     >> Map.remove v ^%= msucc_
+     >> toContext v
 
 let private decomposeGraph v p s =
-       Map.remove v
-    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= dec_ msucc_ a) g)) p
-    >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= dec_ mpred_ a) g)) s
+        Map.remove v
+     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= (Map.key_ a >?-> msucc_)) g)) p
+     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^?%= (Map.key_ a >?-> mpred_)) g)) s
 
 let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
     match Map.tryFind v g with
@@ -203,7 +192,7 @@ let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
     | _ ->
         None, g
 
-let private decompose (g: Graph<'v,'a,'b>) =
+let private decompose (g: Graph<'v,'a,'b>) : Context<'v,'a,'b> option * Graph<'v,'a,'b> =
     match Map.tryFindKey (fun _ _ -> true) g with
     | Some v -> decomposeSpecific v g
     | _ -> None, g
@@ -244,8 +233,8 @@ module Graph =
          >> snd
 
     let addEdge ((v1, v2, e): LEdge<'v,'b>) =
-            Map.add v2 e ^?%= (key_ v1 >?-> msucc_)
-         >> Map.add v1 e ^?%= (key_ v2 >?-> mpred_)
+            Map.add v2 e ^?%= (Map.key_ v1 >?-> msucc_)
+         >> Map.add v1 e ^?%= (Map.key_ v2 >?-> mpred_)
 
     let removeEdge ((v1, v2): Edge<'v>) =
             decomposeSpecific v1
