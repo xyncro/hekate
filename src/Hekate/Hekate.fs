@@ -154,7 +154,7 @@ let private empty : Graph<'v,'a,'b> =
     Map.empty
 
 let private composeGraph c v p s =
-        Lens.set (Map.value_ v) (Some (fromContext c))
+        Optic.set (Map.value_ v) (Some (fromContext c))
      >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >? msucc_)) g)) p
      >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >? mpred_)) g)) s
 
