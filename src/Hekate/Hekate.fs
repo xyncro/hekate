@@ -155,8 +155,8 @@ let private empty : Graph<'v,'a,'b> =
 
 let private composeGraph c v p s =
         Optic.set (Map.value_ v) (Some (fromContext c))
-     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >? msucc_)) g)) p
-     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >? mpred_)) g)) s
+     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >?> msucc_)) g)) p
+     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >?> mpred_)) g)) s
 
 let private compose (c: Context<'v,'a,'b>) : Id<Graph<'v,'a,'b>> =
     composeGraph c (c ^. val_) (c ^. pred_) (c ^. succ_)
@@ -179,8 +179,8 @@ let private decomposeContext v =
 
 let private decomposeGraph v p s =
         Map.remove v
-     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^% (Map.key_ a >? msucc_)) g)) p
-     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^% (Map.key_ a >? mpred_)) g)) s
+     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^% (Map.key_ a >?> msucc_)) g)) p
+     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^% (Map.key_ a >?> mpred_)) g)) s
 
 let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
     match Map.tryFind v g with
@@ -233,8 +233,8 @@ module Graph =
          >> snd
 
     let addEdge ((v1, v2, e): LEdge<'v,'b>) =
-            Map.add v2 e ^% (Map.key_ v1 >? msucc_)
-         >> Map.add v1 e ^% (Map.key_ v2 >? mpred_)
+            Map.add v2 e ^% (Map.key_ v1 >?> msucc_)
+         >> Map.add v1 e ^% (Map.key_ v2 >?> mpred_)
 
     let removeEdge ((v1, v2): Edge<'v>) =
             decomposeSpecific v1

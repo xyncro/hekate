@@ -3,7 +3,7 @@ id Hekate
 title Hekate
 description Functional Graphs for F#
 tags functional graphs inductive fgl f#
-version 2.0.0-b5
+version 2.0.0-b6
 authors Andrew Cherry
 owners Andrew Cherry
 projectUrl https://github.com/hekate/aether
