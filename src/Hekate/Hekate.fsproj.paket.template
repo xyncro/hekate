@@ -6,7 +6,7 @@ tags functional graphs inductive fgl f#
 version 2.0.0
 authors Andrew Cherry
 owners Andrew Cherry
-projectUrl https://github.com/hekate/aether
-licenseUrl https://github.com/hekate/aether/blob/master/LICENSE.md
+projectUrl https://xyncro.tech/hekate
+licenseUrl https://github.com/hekate/blob/master/LICENSE.md
 requireLicenseAcceptance false
 copyright Copyright Xyncro Ltd 2015
