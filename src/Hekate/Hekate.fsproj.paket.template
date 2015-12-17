@@ -1,12 +1,31 @@
 ﻿type project
-id Hekate
-title Hekate
-description Functional Graphs for F#
-tags functional graphs inductive fgl f#
-version 2.0.0
-authors Andrew Cherry
-owners Andrew Cherry
-projectUrl https://xyncro.tech/hekate
-licenseUrl https://github.com/hekate/blob/master/LICENSE.md
-requireLicenseAcceptance false
-copyright Copyright Xyncro Ltd 2015
+id
+    Hekate
+title
+    Hekate
+description
+    Graphs for F#
+tags
+    functional, graphs, inductive, fgl, f#
+version
+    2.0.1
+owners
+    Andrew Cherry
+authors
+    Andrew Cherry
+copyright
+    Copyright Xyncro Ltd 2015
+projectUrl
+    https://xyncro.tech/hekate
+licenseUrl
+    https://github.com/hekate/blob/master/LICENSE.md
+requireLicenseAcceptance
+    false
+files
+    !./bin/*.*
+    ../../targets/Hekate.Net35/bin/Hekate.dll ==> lib/net35
+    ../../targets/Hekate.Net35/bin/Hekate.xml ==> lib/net35
+    ../../targets/Hekate.Net35/bin/Hekate.pdb ==> lib/net35
+    ../../targets/Hekate.Profile259/bin/Hekate.dll ==> lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1
+    ../../targets/Hekate.Profile259/bin/Hekate.xml ==> lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1
+    ../../targets/Hekate.Profile259/bin/Hekate.pdb ==> lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1

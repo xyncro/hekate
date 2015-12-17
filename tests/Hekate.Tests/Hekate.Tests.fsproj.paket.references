@@ -2,6 +2,5 @@ Aether
 
 group Test
 
-  FSharp.Core
   NUnit
   Unquote
