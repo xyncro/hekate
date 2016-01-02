@@ -1,7 +1,7 @@
 # Hekate
 
 [![Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/xyncro/hekate?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build](https://ci.appveyor.com/api/projects/status/fou02uk99tfromr9?svg=true)](https://ci.appveyor.com/project/kolektiv/hekate)
+[![Build](https://ci.appveyor.com/api/projects/status/4pypj5i49q2hhcul?svg=true)](https://ci.appveyor.com/project/xyncro/hekate)
 
 ## What is Hekate?
 
