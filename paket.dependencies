@@ -1,6 +1,6 @@
 source http://nuget.org/api/v2
 
-nuget Aether >= 8.0.2 < 9
+nuget Aether >= 8.0.2 < 9.0.0
 
 group Build
 
@@ -13,5 +13,6 @@ group Test
   framework: >= net45
   source http://nuget.org/api/v2
 
-  nuget NUnit
   nuget Unquote
+  nuget xunit
+  nuget xunit.runner.console
