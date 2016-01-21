@@ -43,12 +43,6 @@ open System
 open Aether
 open Aether.Operators
 
-(* Aliases *)
-
-module L = List
-module M = Map
-module O = Option
-
 (* Prelude
 
    Useful utility functions used throughout Hekate. *)
@@ -124,10 +118,10 @@ let private msucc_ : Lens<MContext<'v,_,'b>, MAdj<'v,'b>> =
    the optmized representational model. *)
 
 let private fromAdj<'v,'b when 'v: comparison> : Adj<'v,'b> -> MAdj<'v,'b> =
-    L.map swap >> M.ofList
+    List.map swap >> Map.ofList
 
 let private toAdj<'v,'b when 'v: comparison> : MAdj<'v,'b> -> Adj<'v,'b> =
-    M.toList >> L.map swap
+    Map.toList >> List.map swap
 
 let private fromContext<'v,'a,'b when 'v: comparison> : Context<'v,'a,'b> -> MContext<'v,'a,'b> =
     fun (p, _, l, s) -> fromAdj p, l, fromAdj s
@@ -148,12 +142,12 @@ type Id<'v> =
     'v -> 'v
 
 let private empty : Graph<'v,'a,'b> =
-    M.empty
+    Map.empty
 
 let private composeGraph c v p s =
-        Optic.set (M.value_ v) (Some (fromContext c))
-     >> flip (L.fold (fun g (b, v') -> (M.add v b ^% (M.key_ v' >?> msucc_)) g)) p
-     >> flip (L.fold (fun g (b, v') -> (M.add v b ^% (M.key_ v' >?> mpred_)) g)) s
+        Optic.set (Map.value_ v) (Some (fromContext c))
+     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >?> msucc_)) g)) p
+     >> flip (List.fold (fun g (b, v') -> (Map.add v b ^% (Map.key_ v' >?> mpred_)) g)) s
 
 let private compose (c: Context<'v,'a,'b>) : Id<Graph<'v,'a,'b>> =
     composeGraph c (c ^. val_) (c ^. pred_) (c ^. succ_)
@@ -170,17 +164,17 @@ let private compose (c: Context<'v,'a,'b>) : Id<Graph<'v,'a,'b>> =
    better align with F# expectations. *)
 
 let private decomposeContext v =
-        M.remove v ^% mpred_
-     >> M.remove v ^% msucc_
+        Map.remove v ^% mpred_
+     >> Map.remove v ^% msucc_
      >> toContext v
 
 let private decomposeGraph v p s =
-        M.remove v
-     >> flip (L.fold (fun g (_, a) -> (M.remove v ^% (M.key_ a >?> msucc_)) g)) p
-     >> flip (L.fold (fun g (_, a) -> (M.remove v ^% (M.key_ a >?> mpred_)) g)) s
+        Map.remove v
+     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^% (Map.key_ a >?> msucc_)) g)) p
+     >> flip (List.fold (fun g (_, a) -> (Map.remove v ^% (Map.key_ a >?> mpred_)) g)) s
 
 let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
-    match M.tryFind v g with
+    match Map.tryFind v g with
     | Some mc ->
         let c = decomposeContext v mc
         let g = decomposeGraph v (c ^. pred_) (c ^. succ_) g
@@ -190,12 +184,12 @@ let private decomposeSpecific v (g: Graph<'v,'a,'b>) =
         None, g
 
 let private decompose (g: Graph<'v,'a,'b>) : Context<'v,'a,'b> option * Graph<'v,'a,'b> =
-    match M.tryFindKey (fun _ _ -> true) g with
+    match Map.tryFindKey (fun _ _ -> true) g with
     | Some v -> decomposeSpecific v g
     | _ -> None, g
 
 let private isEmpty<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> bool =
-    M.isEmpty
+    Map.isEmpty
 
 (* Functions
 
@@ -208,7 +202,7 @@ let rec private ufold f u =
                 | _ -> u
 
 let private fold f xs : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-    flip (L.fold (flip f)) xs
+    flip (List.fold (flip f)) xs
 
 (* Graph
 
@@ -227,15 +221,15 @@ module Graph =
         (* Operations *)
 
         let add ((v1, v2, e): LEdge<'v,'b>) =
-                M.add v2 e ^% (M.key_ v1 >?> msucc_)
-             >> M.add v1 e ^% (M.key_ v2 >?> mpred_)
+                Map.add v2 e ^% (Map.key_ v1 >?> msucc_)
+             >> Map.add v1 e ^% (Map.key_ v2 >?> mpred_)
 
         let addMany es =
                 fold add es
 
         let remove ((v1, v2): Edge<'v>) =
                 decomposeSpecific v1
-             >> function | Some (p, v, l, s), g -> compose (p, v, l, L.filter (fun (_, v') -> v' <> v2) s) g
+             >> function | Some (p, v, l, s), g -> compose (p, v, l, List.filter (fun (_, v') -> v' <> v2) s) g
                          | _, g -> g
 
         let removeMany es =
@@ -244,37 +238,37 @@ module Graph =
         (* Properties *)
 
         let count<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-                M.toList 
-             >> L.map (fun (_, (_, _, s)) -> (M.toList >> L.length) s)
-             >> L.sum
+                Map.toArray 
+             >> Array.map (fun (_, (_, _, s)) -> (Map.toList >> List.length) s)
+             >> Array.sum
 
         (* Map *)
 
         let map mapping : Graph<'v,'a,'b> -> Graph<'v,'a,'c> =
-                M.map (fun v (p, l, s) ->
-                    M.map (fun v' x -> mapping v' v x) p,
+                Map.map (fun v (p, l, s) ->
+                    Map.map (fun v' x -> mapping v' v x) p,
                     l,
-                    M.map (fun v' x -> mapping v v' x) s)
+                    Map.map (fun v' x -> mapping v v' x) s)
 
         (* Projection *)
 
         let toList<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LEdge<'v,'b> list =
-                M.toList 
-             >> L.map (fun (v, (_, _, s)) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s) 
-             >> L.concat
+                Map.toList 
+             >> List.map (fun (v, (_, _, s)) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s) 
+             >> List.concat
 
         (* Query*)
 
         let contains v1 v2 : Graph<'v,'a,'b> -> bool =
-                M.tryFind v1
-             >> O.bind (fun (_, _, s) -> M.tryFind v2 s)
-             >> O.isSome
+                Map.tryFind v1
+             >> Option.bind (fun (_, _, s) -> Map.tryFind v2 s)
+             >> Option.isSome
 
 
         let tryFind v1 v2 : Graph<'v,'a,'b> -> LEdge<'v,'b> option =
-                M.tryFind v1
-             >> O.bind (fun (_, _, s) -> M.tryFind v2 s)
-             >> O.map (fun b -> (v1, v2, b))
+                Map.tryFind v1
+             >> Option.bind (fun (_, _, s) -> Map.tryFind v2 s)
+             >> Option.map (fun b -> (v1, v2, b))
 
         let find v1 v2 =
                 tryFind v1 v2
@@ -287,7 +281,7 @@ module Graph =
         (* Operations*)
 
         let add ((v, l): LNode<'v,'a>) =
-                M.add v (M.empty, l, M.empty)
+                Map.add v (Map.empty, l, Map.empty)
 
         let addMany ns =
                 fold add ns
@@ -302,34 +296,39 @@ module Graph =
         (* Properties *)
 
         let count<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-                M.toList
-             >> L.length
+                Map.toArray
+             >> Array.length
 
         (* Map *)
 
         let map mapping : Graph<'v,'a,'b> -> Graph<'v,'c,'b> =
-                M.map (fun v (p, l, s) ->
+                Map.map (fun v (p, l, s) ->
                     p, mapping v l, s)
 
+#if NET35
+#else
+
         let mapFold mapping state : Graph<'v,'a,'b> -> 's * Graph<'v,'c,'b> =
-                M.toList
-             >> L.mapFold (fun state (v, (p, l, s)) -> mapping state v l |> fun (c, state) -> (v, (p, c, s)), state) state
-             >> fun (graph, state) -> state, Map.ofList graph
+                Map.toArray
+             >> Array.mapFold (fun state (v, (p, l, s)) -> mapping state v l |> fun (c, state) -> (v, (p, c, s)), state) state
+             >> fun (graph, state) -> state, Map.ofArray graph
+
+#endif
 
         (* Projection *)
 
         let toList<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LNode<'v,'a> list =
-                M.toList
-             >> L.map (fun (v, (_, l, _)) -> v, l)
+                Map.toList
+             >> List.map (fun (v, (_, l, _)) -> v, l)
 
         (* Query*)
 
         let contains v : Graph<'v,'a,'b> -> bool =
-                M.containsKey v
+                Map.containsKey v
 
         let tryFind v : Graph<'v,'a,'b> -> LNode<'v,'a> option =
-                M.tryFind v
-             >> O.map (fun (_, l, _) -> v, l)
+                Map.tryFind v
+             >> Option.map (fun (_, l, _) -> v, l)
 
         let find v =
                 tryFind v 
@@ -339,36 +338,36 @@ module Graph =
         (* Adjacency and Degree *)
 
         let neighbours v =
-                M.tryFind v
-             >> O.map (fun (p, _, s) -> M.toList p @ M.toList s)
+                Map.tryFind v
+             >> Option.map (fun (p, _, s) -> Map.toList p @ Map.toList s)
 
         let successors v =
-                M.tryFind v
-             >> O.map (fun (_, _, s) -> M.toList s)
+                Map.tryFind v
+             >> Option.map (fun (_, _, s) -> Map.toList s)
 
         let predecessors v =
-                M.tryFind v
-             >> O.map (fun (p, _, _) -> M.toList p)
+                Map.tryFind v
+             >> Option.map (fun (p, _, _) -> Map.toList p)
 
         let outward v =
-                M.tryFind v
-             >> O.map (fun (_, _, s) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s)
+                Map.tryFind v
+             >> Option.map (fun (_, _, s) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s)
 
         let inward v =
-                M.tryFind v
-             >> O.map (fun (p, _, _) -> (M.toList >> L.map (fun (v', b) -> v', v, b)) p)
+                Map.tryFind v
+             >> Option.map (fun (p, _, _) -> (Map.toList >> List.map (fun (v', b) -> v', v, b)) p)
 
         let degree v =
-                M.tryFind v
-             >> O.map (fun (p, _, s) -> (M.toList >> L.length) p + (M.toList >> L.length) s)
+                Map.tryFind v
+             >> Option.map (fun (p, _, s) -> (Map.toList >> List.length) p + (Map.toList >> List.length) s)
 
         let outwardDegree v =
-                M.tryFind v
-             >> O.map (fun (_, _, s) -> (M.toList >> L.length) s)
+                Map.tryFind v
+             >> Option.map (fun (_, _, s) -> (Map.toList >> List.length) s)
 
         let inwardDegree v =
-                M.tryFind v
-             >> O.map (fun (p, _, _) -> (M.toList >> L.length) p)
+                Map.tryFind v
+             >> Option.map (fun (p, _, _) -> (Map.toList >> List.length) p)
 
     (* Operations *)
 
@@ -386,10 +385,10 @@ module Graph =
     (* Mapping *)
 
     let map f : Graph<'v,'a,'b> -> Graph<'v,'c,'d> =
-        M.map (fun v mc -> (toContext v >> f >> fromContext) mc)
+        Map.map (fun v mc -> (toContext v >> f >> fromContext) mc)
 
     let rev<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> Graph<'v,'a,'b> =
-        M.map (fun _ (p, l, s) -> (s, l, p))
+        Map.map (fun _ (p, l, s) -> (s, l, p))
 
     (* Obsolete (Deprecated) Functions
 
