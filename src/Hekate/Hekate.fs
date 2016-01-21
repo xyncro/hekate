@@ -53,6 +53,20 @@ let private flip f a b =
 let private swap (a, b) =
     (b, a)
 
+#if NET35
+
+[<RequireQualifiedAccess>]
+module internal List =
+
+    let mapFold f s l =
+        let rec loop s g =
+            function | [] -> g ([], s)
+                     | x :: xs -> (fun (y, s) -> loop s (fun (ys, s) -> g (y :: ys, s)) xs) (f s x)
+
+        loop s id l
+
+#endif
+
 (* Definitional Types and Lenses
 
    Types defining data structures which form the logical programming model
@@ -305,15 +319,10 @@ module Graph =
                 Map.map (fun v (p, l, s) ->
                     p, mapping v l, s)
 
-#if NET35
-#else
-
         let mapFold mapping state : Graph<'v,'a,'b> -> 's * Graph<'v,'c,'b> =
-                Map.toArray
-             >> Array.mapFold (fun state (v, (p, l, s)) -> mapping state v l |> fun (c, state) -> (v, (p, c, s)), state) state
-             >> fun (graph, state) -> state, Map.ofArray graph
-
-#endif
+                Map.toList
+             >> List.mapFold (fun state (v, (p, l, s)) -> mapping state v l |> fun (c, state) -> (v, (p, c, s)), state) state
+             >> fun (graph, state) -> state, Map.ofList graph
 
         (* Projection *)
 
