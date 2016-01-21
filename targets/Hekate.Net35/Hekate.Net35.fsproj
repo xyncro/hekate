@@ -30,7 +30,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;NET35</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Hekate.xml</DocumentationFile>
   </PropertyGroup>
