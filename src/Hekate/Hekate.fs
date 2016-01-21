@@ -250,11 +250,11 @@ module Graph =
 
         (* Map *)
 
-        let map f : Graph<'v,'a,'b> -> Graph<'v,'a,'c> =
+        let map mapping : Graph<'v,'a,'b> -> Graph<'v,'a,'c> =
                 M.map (fun v (p, l, s) ->
-                    M.map (fun v' x -> f v' v x) p,
+                    M.map (fun v' x -> mapping v' v x) p,
                     l,
-                    M.map (fun v' x -> f v v' x) s)
+                    M.map (fun v' x -> mapping v v' x) s)
 
         (* Projection *)
 
@@ -302,14 +302,19 @@ module Graph =
         (* Properties *)
 
         let count<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-                M.toList 
+                M.toList
              >> L.length
 
         (* Map *)
 
-        let map f : Graph<'v,'a,'b> -> Graph<'v,'c,'b> =
+        let map mapping : Graph<'v,'a,'b> -> Graph<'v,'c,'b> =
                 M.map (fun v (p, l, s) ->
-                    p, f v l, s)
+                    p, mapping v l, s)
+
+        let mapFold mapping state : Graph<'v,'a,'b> -> 's * Graph<'v,'c,'b> =
+                M.toList
+             >> L.mapFold (fun state (v, (p, l, s)) -> mapping state v l |> fun (c, state) -> (v, (p, c, s)), state) state
+             >> fun (graph, state) -> state, Map.ofList graph
 
         (* Projection *)
 
@@ -484,41 +489,33 @@ module Graph =
     (* Adjacency and Degree *)
 
     [<Obsolete ("Use Graph.Nodes.neighbours instead.")>]
-    let neighbours v =
-            M.tryFind v
-         >> O.map (fun (p, _, s) -> M.toList p @ M.toList s)
+    let neighbours =
+        Nodes.neighbours
 
     [<Obsolete ("Use Graph.Nodes.successors instead.")>]
-    let successors v =
-            M.tryFind v
-         >> O.map (fun (_, _, s) -> M.toList s)
+    let successors =
+        Nodes.successors
 
     [<Obsolete ("Use Graph.Nodes.predecessors instead.")>]
-    let predecessors v =
-            M.tryFind v
-         >> O.map (fun (p, _, _) -> M.toList p)
+    let predecessors =
+        Nodes.predecessors
 
     [<Obsolete ("Use Graph.Nodes.outward instead.")>]
-    let outward v =
-            M.tryFind v
-         >> O.map (fun (_, _, s) -> (M.toList >> L.map (fun (v', b) -> v, v', b)) s)
+    let outward =
+        Nodes.outward
 
     [<Obsolete ("Use Graph.Nodes.inward instead.")>]
-    let inward v =
-            M.tryFind v
-         >> O.map (fun (p, _, _) -> (M.toList >> L.map (fun (v', b) -> v', v, b)) p)
+    let inward =
+        Nodes.inward
 
     [<Obsolete ("Use Graph.Nodes.degree instead.")>]
-    let degree v =
-            M.tryFind v
-         >> O.map (fun (p, _, s) -> (M.toList >> L.length) p + (M.toList >> L.length) s)
+    let degree =
+        Nodes.degree
 
     [<Obsolete ("Use Graph.Nodes.outwardDegree instead.")>]
-    let outwardDegree v =
-            M.tryFind v
-         >> O.map (fun (_, _, s) -> (M.toList >> L.length) s)
+    let outwardDegree =
+        Nodes.outwardDegree
 
     [<Obsolete ("Use Graph.Nodes.inwardDegree instead.")>]
-    let inwardDegree v =
-            M.tryFind v
-         >> O.map (fun (p, _, _) -> (M.toList >> L.length) p)
+    let inwardDegree =
+        Nodes.inwardDegree
