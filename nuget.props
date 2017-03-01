@@ -2,7 +2,7 @@
   <PropertyGroup>
     <VersionPrefix>3.2.1</VersionPrefix>
     <Authors>Andrew Cherry</Authors>
-    <Summary>Graphs for F#</Summary>
+    <Description>Graphs for F#</Description>
     <Copyright>Copyright © Xyncro Ltd</Copyright>
     <PackageLicenseUrl>https://github.com/xyncro/hekate/blob/master/LICENSE.md</PackageLicenseUrl>
     <PackageProjectUrl>https://xyncro.tech/hekate/</PackageProjectUrl>
