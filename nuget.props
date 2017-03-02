@@ -8,6 +8,6 @@
     <PackageProjectUrl>https://xyncro.tech/hekate/</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/xyncro/hekate</RepositoryUrl>
-    <PackageTags>functional;graphs;inductive;f#;fsharp</PackageTags>
+    <PackageTags>$(PackageTags);functional;graphs;inductive;f#;fsharp</PackageTags>
   </PropertyGroup>
 </Project>
