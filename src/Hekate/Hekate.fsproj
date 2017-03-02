@@ -4,6 +4,7 @@
     <VersionPrefix>3.2.1</VersionPrefix>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <Import Project="..\nuget.props" />
   <ItemGroup>
     <Compile Include="Hekate.fs" />
     <EmbeddedResource Include="**\*.resx" />
