@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <VersionPrefix>3.2.1</VersionPrefix>
+    <Authors>Andrew Cherry</Authors>
+    <Description>Graphs for F#</Description>
+    <Copyright>Copyright © Xyncro Ltd</Copyright>
+    <PackageLicenseUrl>https://github.com/xyncro/hekate/blob/master/LICENSE.md</PackageLicenseUrl>
+    <PackageProjectUrl>https://xyncro.tech/hekate/</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/xyncro/hekate</RepositoryUrl>
+    <PackageTags>$(PackageTags);functional;graphs;inductive;f#;fsharp</PackageTags>
+  </PropertyGroup>
+</Project>
