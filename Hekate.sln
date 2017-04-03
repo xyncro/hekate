@@ -1,112 +1,56 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sln", "sln", "{73D33E27-9CE7-48CF-8785-21596AC25F9D}"
+# Visual Studio 15
+VisualStudioVersion = 15.0.26124.0
+MinimumVisualStudioVersion = 15.0.26124.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{686A1D42-3DAA-4C8F-8223-0F8551F147A2}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D1DA0382-C594-48A3-84B8-8B943C40B713}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate", "src\Hekate\Hekate.fsproj", "{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CC262F4D-2C10-4A79-8FB4-40F1F35780F9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{9F6FC567-A14D-4043-B398-0CC6E4CC808F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{5001D89F-444B-4C5B-B85E-FF69DAD12DFE}"
-	ProjectSection(SolutionItems) = preProject
-		build.cmd = build.cmd
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "paket", "paket", "{66F030C1-CE2E-4C56-A13E-D3976B005848}"
-	ProjectSection(SolutionItems) = preProject
-		paket.dependencies = paket.dependencies
-		paket.lock = paket.lock
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "references", "references", "{C7073A13-4414-47A7-B2EC-03D3939DB255}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EBEB99B1-10F0-45AC-A794-C4D37ECD43C9}"
-	ProjectSection(SolutionItems) = preProject
-		src\Hekate\Hekate.fsproj.paket.references = src\Hekate\Hekate.fsproj.paket.references
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{403BDD08-BDFA-48C4-9D73-09B9BC97459A}"
-	ProjectSection(SolutionItems) = preProject
-		tests\Hekate.Tests\Hekate.Tests.fsproj.paket.references = tests\Hekate.Tests\Hekate.Tests.fsproj.paket.references
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{ED1C8C65-1037-4035-B8B0-B00F667A96AE}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A8440A13-5C8B-4C7F-97CC-3E125EEC75A4}"
-	ProjectSection(SolutionItems) = preProject
-		src\Hekate\Hekate.fsproj.paket.template = src\Hekate\Hekate.fsproj.paket.template
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "targets", "targets", "{E4FF5D8D-6F4B-4EE0-A704-F9F94BC4002D}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Profile259", "targets\Hekate.Profile259\Hekate.Profile259.fsproj", "{CC59C036-1604-4074-8666-2F4A32BE11FC}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Net35", "targets\Hekate.Net35\Hekate.Net35.fsproj", "{2067D5E4-5269-42A6-AE1D-DECD34B1B76C}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate", "src\Hekate\Hekate.fsproj", "{7D24ABD2-33D7-4E11-B686-90D803980676}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "targets", "targets", "{8E57CF4B-825C-434B-86C3-EBA6EAFE8074}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Tests", "tests\Hekate.Tests\Hekate.Tests.fsproj", "{E8065E21-B677-46C1-9AF5-EB2195F83C23}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "net35", "net35", "{C034E2FC-2B59-4A8E-8A5F-6F119E8F0AA6}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "profile259", "profile259", "{96F5216B-3555-4D3F-A73F-40B7F6C41847}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "net35", "net35", "{27E4DBE5-DBDB-4C06-B71D-A4C62DFAB16C}"
-	ProjectSection(SolutionItems) = preProject
-		targets\Hekate.Net35\Hekate.Net35.fsproj.paket.references = targets\Hekate.Net35\Hekate.Net35.fsproj.paket.references
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "profile259", "profile259", "{77412092-5A0A-4D12-BEB1-7296E33226E9}"
-	ProjectSection(SolutionItems) = preProject
-		targets\Hekate.Profile259\Hekate.Profile259.fsproj.paket.references = targets\Hekate.Profile259\Hekate.Profile259.fsproj.paket.references
-	EndProjectSection
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hekate.Tests", "tests\Hekate.Tests\Hekate.Tests.fsproj", "{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CC59C036-1604-4074-8666-2F4A32BE11FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CC59C036-1604-4074-8666-2F4A32BE11FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CC59C036-1604-4074-8666-2F4A32BE11FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CC59C036-1604-4074-8666-2F4A32BE11FC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2067D5E4-5269-42A6-AE1D-DECD34B1B76C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2067D5E4-5269-42A6-AE1D-DECD34B1B76C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2067D5E4-5269-42A6-AE1D-DECD34B1B76C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2067D5E4-5269-42A6-AE1D-DECD34B1B76C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7D24ABD2-33D7-4E11-B686-90D803980676}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7D24ABD2-33D7-4E11-B686-90D803980676}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7D24ABD2-33D7-4E11-B686-90D803980676}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7D24ABD2-33D7-4E11-B686-90D803980676}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E8065E21-B677-46C1-9AF5-EB2195F83C23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E8065E21-B677-46C1-9AF5-EB2195F83C23}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E8065E21-B677-46C1-9AF5-EB2195F83C23}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E8065E21-B677-46C1-9AF5-EB2195F83C23}.Release|Any CPU.Build.0 = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Debug|x64.ActiveCfg = Debug|x64
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Debug|x64.Build.0 = Debug|x64
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Debug|x86.ActiveCfg = Debug|x86
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Debug|x86.Build.0 = Debug|x86
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Release|x64.ActiveCfg = Release|x64
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Release|x64.Build.0 = Release|x64
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Release|x86.ActiveCfg = Release|x86
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7}.Release|x86.Build.0 = Release|x86
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Debug|x64.ActiveCfg = Debug|x64
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Debug|x64.Build.0 = Debug|x64
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Debug|x86.ActiveCfg = Debug|x86
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Debug|x86.Build.0 = Debug|x86
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Release|x64.ActiveCfg = Release|x64
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Release|x64.Build.0 = Release|x64
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Release|x86.ActiveCfg = Release|x86
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{5001D89F-444B-4C5B-B85E-FF69DAD12DFE} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
-		{66F030C1-CE2E-4C56-A13E-D3976B005848} = {73D33E27-9CE7-48CF-8785-21596AC25F9D}
-		{C7073A13-4414-47A7-B2EC-03D3939DB255} = {66F030C1-CE2E-4C56-A13E-D3976B005848}
-		{EBEB99B1-10F0-45AC-A794-C4D37ECD43C9} = {C7073A13-4414-47A7-B2EC-03D3939DB255}
-		{403BDD08-BDFA-48C4-9D73-09B9BC97459A} = {C7073A13-4414-47A7-B2EC-03D3939DB255}
-		{ED1C8C65-1037-4035-B8B0-B00F667A96AE} = {66F030C1-CE2E-4C56-A13E-D3976B005848}
-		{A8440A13-5C8B-4C7F-97CC-3E125EEC75A4} = {ED1C8C65-1037-4035-B8B0-B00F667A96AE}
-		{CC59C036-1604-4074-8666-2F4A32BE11FC} = {96F5216B-3555-4D3F-A73F-40B7F6C41847}
-		{2067D5E4-5269-42A6-AE1D-DECD34B1B76C} = {C034E2FC-2B59-4A8E-8A5F-6F119E8F0AA6}
-		{7D24ABD2-33D7-4E11-B686-90D803980676} = {D1DA0382-C594-48A3-84B8-8B943C40B713}
-		{8E57CF4B-825C-434B-86C3-EBA6EAFE8074} = {C7073A13-4414-47A7-B2EC-03D3939DB255}
-		{E8065E21-B677-46C1-9AF5-EB2195F83C23} = {CC262F4D-2C10-4A79-8FB4-40F1F35780F9}
-		{C034E2FC-2B59-4A8E-8A5F-6F119E8F0AA6} = {E4FF5D8D-6F4B-4EE0-A704-F9F94BC4002D}
-		{96F5216B-3555-4D3F-A73F-40B7F6C41847} = {E4FF5D8D-6F4B-4EE0-A704-F9F94BC4002D}
-		{27E4DBE5-DBDB-4C06-B71D-A4C62DFAB16C} = {8E57CF4B-825C-434B-86C3-EBA6EAFE8074}
-		{77412092-5A0A-4D12-BEB1-7296E33226E9} = {8E57CF4B-825C-434B-86C3-EBA6EAFE8074}
+		{0B0F73CB-98AD-442B-BB42-599D5BC0FFF7} = {686A1D42-3DAA-4C8F-8223-0F8551F147A2}
+		{5CE3D0AD-2347-4171-BA85-E9FEB3DB1541} = {9F6FC567-A14D-4043-B398-0CC6E4CC808F}
 	EndGlobalSection
 EndGlobal

@@ -20,7 +20,7 @@
    [FGL]: http://hackage.haskell.org/package/fgl
 
    There are some significant differences between Hekate and FGL:
-   
+
    - Hekate does not have a concept of
      an unlabelled graph, either in terms of nodes or edges, and thus does
      not draw the FGL distinction between types Node, LNode, etc.
@@ -52,20 +52,6 @@ let private flip f a b =
 
 let private swap (a, b) =
     (b, a)
-
-#if NET35
-
-[<RequireQualifiedAccess>]
-module internal List =
-
-    let mapFold f s l =
-        let rec loop s g =
-            function | [] -> g ([], s)
-                     | x :: xs -> (fun (y, s) -> loop s (fun (ys, s) -> g (y :: ys, s)) xs) (f s x)
-
-        loop s id l
-
-#endif
 
 (* Definitional Types and Lenses
 
@@ -252,7 +238,7 @@ module Graph =
         (* Properties *)
 
         let count<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> int =
-                Map.toArray 
+                Map.toArray
              >> Array.map (fun (_, (_, _, s)) -> (Map.toList >> List.length) s)
              >> Array.sum
 
@@ -267,8 +253,8 @@ module Graph =
         (* Projection *)
 
         let toList<'v,'a,'b when 'v: comparison> : Graph<'v,'a,'b> -> LEdge<'v,'b> list =
-                Map.toList 
-             >> List.map (fun (v, (_, _, s)) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s) 
+                Map.toList
+             >> List.map (fun (v, (_, _, s)) -> (Map.toList >> List.map (fun (v', b) -> v, v', b)) s)
              >> List.concat
 
         (* Query*)
@@ -340,8 +326,8 @@ module Graph =
              >> Option.map (fun (_, l, _) -> v, l)
 
         let find v =
-                tryFind v 
-             >> function | Some n -> n 
+                tryFind v
+             >> function | Some n -> n
                          | _ -> failwith (sprintf "Node %A Not Found" v)
 
         (* Adjacency and Degree *)
