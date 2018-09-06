@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Compile Include="Hekate.Tests.fs" />
-    <Compile Include="Program.fs" />
     <EmbeddedResource Include="**\*.resx" />
   </ItemGroup>
 
