@@ -1,13 +1,7 @@
-version: 3.2.1-aci-{build}
-
+image: Visual Studio 2017
 build_script:
-  - ps: dotnet --info
-  - ps: dotnet restore
-  - ps: dotnet build -c Release --version-suffix "aci-${env:APPVEYOR_BUILD_NUMBER}"
-  - ps: dotnet test -c Release tests/Hekate.Tests/Hekate.Tests.fsproj
-  - ps: dotnet pack -c Release --include-symbols --version-suffix "aci-${env:APPVEYOR_BUILD_NUMBER}"
-
-test: off
-
+- ps: |
+      .\build.ps1
+      if ($lastexitcode -ne 0){ exit $lastexitcode }
 artifacts:
-  - path: '**\*.nupkg'
+- path: bin\*.nupkg

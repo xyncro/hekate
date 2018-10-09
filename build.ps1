@@ -1,21 +1,21 @@
-$ErrorActionPreference = "Stop"
+[xml]$doc = Get-Content .\src\Directory.Build.props
+$version = $doc.Project.PropertyGroup.VersionPrefix # the version under development, update after a release
+$versionSuffix = '-build.0' # manually incremented for local builds
 
-function checkExitCode {
-    if ($LastExitCode -ne 0) {
-        throw "Non-zero exit code: $LastExitCode"
-    }
+function isVersionTag($tag){
+    $v = New-Object Version
+    [Version]::TryParse($tag, [ref]$v)
 }
 
-dotnet clean
-checkExitCode
+if ($env:appveyor){
+    $versionSuffix = '-build.' + $env:appveyor_build_number
+    if ($env:appveyor_repo_tag -eq 'true' -and (isVersionTag($env:appveyor_repo_tag_name))){
+        $version = $env:appveyor_repo_tag_name
+        $versionSuffix = ''
+    }
+    Update-AppveyorBuild -Version "$version$versionSuffix"
+}
 
-dotnet restore
-checkExitCode
-
-dotnet build -c Release --version-suffix "dev"
-checkExitCode
-
-dotnet test -c Release tests/Hekate.Tests/Hekate.Tests.fsproj
-checkExitCode
-
-dotnet pack -c Release --include-symbols --include-source --version-suffix "dev"
+dotnet build -c Release Hekate.sln /p:Version=$version$versionSuffix
+dotnet test --no-build -c Release tests/Hekate.Tests/Hekate.Tests.fsproj
+dotnet pack --no-build -c Release src/Hekate /p:Version=$version$versionSuffix -o $psscriptroot/bin
